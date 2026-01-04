@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>My Mini App</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+  <h2>Добро пожаловать</h2>
+  <p>Это моё первое Mini App</p>
+  <button onclick="earn()">Получить награду</button>
+
+  <script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+
+    function earn() {
+      alert("Награда начислена (пока тест)");
+    }
+  </script>
+</body>
+</html>
