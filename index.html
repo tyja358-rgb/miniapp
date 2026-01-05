@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>KWT Mini App ⚡</title>
+  <title>KWT Mini App ⚡ Кабинет</title>
   <script src="https://cdn.adsonar.io/ad.js"></script>
   <style>
     body { 
@@ -12,106 +12,108 @@
       background: #f0f8ff; 
     }
     h2 { color: #333; }
-    #rewardButton {
+    button {
       background-color: #4CAF50; 
       color: white; 
-      font-size: 18px;
-      padding: 15px 30px; 
-      border-radius: 10px; 
+      font-size: 16px;
+      padding: 10px 25px; 
+      border-radius: 8px; 
       cursor: pointer; 
-      margin-top: 20px;
+      margin: 10px;
       transition: transform 0.1s, box-shadow 0.2s;
     }
-    #rewardButton:active { 
-      transform: scale(1.05); 
-      box-shadow: 0 0 20px #4CAF50; 
+    button:active { transform: scale(1.05); box-shadow: 0 0 15px #4CAF50; }
+    
+    .bar-container {
+      width: 80%; height: 25px; background-color: #ccc; margin: 10px auto;
+      border-radius: 12px; overflow: hidden; box-shadow: inset 0 0 5px #0003;
     }
-    #progress { font-size: 16px; margin-top: 20px; }
-    #energy-bar {
-      width: 80%; 
-      height: 25px; 
-      background-color: #ccc; 
-      margin: 10px auto;
-      border-radius: 12px; 
-      overflow: hidden; 
-      box-shadow: inset 0 0 5px #0003;
-    }
-    #energy-fill {
-      height: 100%; 
-      width: 0%; 
-      background: linear-gradient(to right, #4CAF50, #00FFAA);
+    .bar-fill {
+      height: 100%; width: 0%; background: linear-gradient(to right, #4CAF50, #00FFAA);
       transition: width 0.5s;
     }
+
     #bonus { font-size: 16px; color: #ff4500; margin-top: 10px; }
     #spark { font-size: 24px; display: inline-block; margin-left: 10px; animation: spark 0.5s ease-out; }
-    @keyframes spark {
-      0% { transform: scale(0); opacity: 0; }
-      50% { transform: scale(1.5); opacity: 1; }
-      100% { transform: scale(1); opacity: 0; }
-    }
-    .flash { animation: flash 0.3s; }
-    @keyframes flash { 0% { background-color: yellow; } 100% { background-color: #4CAF50; } }
+    @keyframes spark { 0% { transform: scale(0); opacity: 0; } 50% { transform: scale(1.5); opacity: 1; } 100% { transform: scale(1); opacity: 0; } }
   </style>
 </head>
 <body>
   <h2>Добро пожаловать в KWT Mini App ⚡</h2>
-  <p>Собирайте энергию и получайте KWT:</p>
+  <p>Кабинет пользователя: <span id="user-id">User123</span></p>
 
-  <div id="energy-bar"><div id="energy-fill"></div></div>
-  <p id="progress">Сегодня сгенерировано: 0 KWT <span id="spark">⚡</span></p>
+  <h3>Энергия за рекламу (для апгрейдов)</h3>
+  <div class="bar-container">
+    <div id="ad-energy-fill" class="bar-fill"></div>
+  </div>
+  <p>Баланс рекламной энергии: <span id="ad-energy">0</span></p>
+  <button id="watch-ad">Смотреть рекламу и получить энергию</button>
+  <button id="upgrade-station">Прокачать электростанцию (-5 энергии)</button>
+
+  <h3>Денежная шкала (можно вывести в TON)</h3>
+  <div class="bar-container">
+    <div id="money-fill" class="bar-fill"></div>
+  </div>
+  <p>Баланс денег: <span id="money">0.00</span> KWT</p>
+  <button id="withdraw-money">Вывести в TON</button>
+
   <p id="bonus"></p>
 
-  <button id="rewardButton">Смотреть рекламу и получить KWT</button>
-
-  <p>Ссылка на Telegram-бота: 
-    <a href="http://telegram.me/Kwt_pool_bot" target="_blank">Открыть бота</a>
-  </p>
-
   <script>
-    // Инициализация AdSonar (тест)
-    AdSonar.init({ appId: "ВАШ_APP_ID" });
+    // Тестовые данные пользователя (в будущем подключение через Telegram)
+    let userId = "User123"; 
+    document.getElementById("user-id").innerText = userId;
 
-    let points = parseFloat(localStorage.getItem("points")) || 0;
-    let level = Math.floor(points / 10) + 1;
+    // Балансы
+    let adEnergy = parseFloat(localStorage.getItem(userId+"_adEnergy")) || 0;
+    let money = parseFloat(localStorage.getItem(userId+"_money")) || 0;
 
-    function updateProgress() {
-      document.getElementById("progress").innerHTML = `Сегодня сгенерировано: ${points.toFixed(3)} KWT <span id="spark">⚡</span>`;
-      let percent = Math.min((points % 10) * 10, 100);
-      let fill = document.getElementById("energy-fill");
-      fill.style.width = percent + "%";
-      fill.classList.add("flash");
-      setTimeout(()=>fill.classList.remove("flash"), 300);
+    function updateBars() {
+      document.getElementById("ad-energy").innerText = adEnergy.toFixed(2);
+      document.getElementById("money").innerText = money.toFixed(2);
 
-      // Анимация ⚡
-      let spark = document.getElementById("spark");
-      spark.style.animation = "spark 0.5s ease-out";
-      setTimeout(()=>{ spark.style.animation = ""; }, 500);
+      // Прогресс бары (макс 20 для рекламы, макс 100 для денег для примера)
+      document.getElementById("ad-energy-fill").style.width = Math.min(adEnergy/20*100,100)+"%";
+      document.getElementById("money-fill").style.width = Math.min(money/100*100,100)+"%";
     }
 
-    function showReward() {
-      alert("Вы сгенерировали 0.003 KWT энергии!");
-      points += 0.003;
+    function watchAd() {
+      let gain = 1; // энергия за просмотр
+      adEnergy += gain;
+      localStorage.setItem(userId+"_adEnergy", adEnergy);
+      updateBars();
+      alert(`Вы получили ${gain} рекламной энергии!`);
+    }
 
-      // Проверка уровня и бонусов
-      let newLevel = Math.floor(points / 10) + 1;
-      if(newLevel > level) {
-        level = newLevel;
-        document.getElementById("bonus").innerText = `🎉 Поздравляем! Вы достигли уровня ${level}! Бонус начислен!`;
+    function upgradeStation() {
+      if(adEnergy >= 5) {
+        adEnergy -= 5;
+        localStorage.setItem(userId+"_adEnergy", adEnergy);
+        updateBars();
+        alert("Электростанция улучшена!"); // Позже сюда можно добавить визуальные апгрейды
       } else {
-        document.getElementById("bonus").innerText = "";
+        alert("Недостаточно рекламной энергии для апгрейда!");
       }
-
-      localStorage.setItem("points", points);
-      updateProgress();
-
-      // Когда придёт App ID:
-      // AdSonar.showRewarded();
     }
 
-    document.getElementById("rewardButton").addEventListener("click", showReward);
+    function withdrawMoney() {
+      if(money > 0) {
+        let amount = money.toFixed(2);
+        money = 0;
+        localStorage.setItem(userId+"_money", money);
+        updateBars();
+        alert(`Вы вывели ${amount} KWT в TON через Telegram!`);
+      } else {
+        alert("Баланс пустой!");
+      }
+    }
 
-    // Обновление при загрузке
-    updateProgress();
+    document.getElementById("watch-ad").addEventListener("click", watchAd);
+    document.getElementById("upgrade-station").addEventListener("click", upgradeStation);
+    document.getElementById("withdraw-money").addEventListener("click", withdrawMoney);
+
+    // Инициализация при загрузке
+    updateBars();
   </script>
 </body>
 </html>
