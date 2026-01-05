@@ -3,21 +3,29 @@
 <head>
   <meta charset="UTF-8">
   <title>Mini App</title>
-
+  
   <!-- AdSonar SDK -->
   <script src="https://cdn.adsonar.io/ad.js"></script>
   <script>
-    // Пока нет App ID, оставляем как заглушку
-    // Когда придёт App ID от AdSonar, замените "ВАШ_APP_ID" на реальный
+    // Инициализация AdSonar
+    // Пока нет App ID, оставляем "ВАШ_APP_ID"
     AdSonar.init({ appId: "ВАШ_APP_ID" });
+
+    // Функция для кнопки
+    function showReward() {
+      // Пока App ID нет, показываем заглушку
+      alert("Награда будет начисляться после подключения AdSonar!");
+      // Когда придёт App ID, можно заменить на:
+      // AdSonar.showRewarded();
+    }
   </script>
 </head>
 <body>
   <h2>Добро пожаловать!</h2>
   <p>Откройте Mini App и получайте награды:</p>
 
-  <!-- Кнопка для показа видео с наградой -->
-  <button onclick="AdSonar.showRewarded()">
+  <!-- Рабочая тестовая кнопка -->
+  <button onclick="showReward()">
     Смотреть рекламу и получить награду
   </button>
 
