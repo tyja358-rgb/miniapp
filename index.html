@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -28,6 +27,21 @@
       box-shadow: 0 0 20px #4CAF50; 
     }
     #progress { font-size: 16px; margin-top: 20px; }
+    #energy-bar {
+      width: 80%; 
+      height: 25px; 
+      background-color: #ccc; 
+      margin: 10px auto;
+      border-radius: 12px; 
+      overflow: hidden; 
+      box-shadow: inset 0 0 5px #0003;
+    }
+    #energy-fill {
+      height: 100%; 
+      width: 0%; 
+      background: linear-gradient(to right, #4CAF50, #00FFAA);
+      transition: width 0.5s;
+    }
     #bonus { font-size: 16px; color: #ff4500; margin-top: 10px; }
     #spark { font-size: 24px; display: inline-block; margin-left: 10px; animation: spark 0.5s ease-out; }
     @keyframes spark {
@@ -37,65 +51,13 @@
     }
     .flash { animation: flash 0.3s; }
     @keyframes flash { 0% { background-color: yellow; } 100% { background-color: #4CAF50; } }
-
-    /* Контейнер станции */
-    #station-container {
-      position: relative; 
-      width: 150px; 
-      height: 200px; 
-      margin: 20px auto;
-    }
-    /* Самая станция */
-    #station {
-      width: 100%; 
-      height: 100%; 
-      background: linear-gradient(to top, #888 0%, #ccc 100%);
-      border-radius: 10px 10px 0 0;
-      position: relative;
-      box-shadow: inset 0 0 20px #fff4, 0 0 10px #0003;
-      transition: transform 0.3s;
-    }
-    /* Огни станции */
-    #station::before, #station::after {
-      content: '';
-      position: absolute;
-      width: 20px; height: 20px;
-      border-radius: 50%;
-      background: yellow;
-      top: 20px;
-      left: 20px;
-      box-shadow: 50px 0 yellow;
-      opacity: 0.7;
-      animation: blink 1s infinite alternate;
-    }
-    @keyframes blink {
-      0% { opacity: 0.2; }
-      50% { opacity: 1; }
-      100% { opacity: 0.2; }
-    }
-    /* Вспышка при генерации */
-    #station-spark {
-      position:absolute; 
-      top:0; left:0; 
-      width:100%; height:100%;
-      border-radius:50%; 
-      background: radial-gradient(circle, rgba(255,255,0,0.5) 0%, rgba(255,255,0,0) 70%);
-      opacity:0; 
-      pointer-events:none;
-      transition: opacity 0.3s ease-out;
-    }
   </style>
 </head>
 <body>
   <h2>Добро пожаловать в KWT Mini App ⚡</h2>
   <p>Собирайте энергию и получайте KWT:</p>
 
-  <!-- Центральная CSS-станция -->
-  <div id="station-container">
-    <div id="station"></div>
-    <div id="station-spark"></div>
-  </div>
-
+  <div id="energy-bar"><div id="energy-fill"></div></div>
   <p id="progress">Сегодня сгенерировано: 0 KWT <span id="spark">⚡</span></p>
   <p id="bonus"></p>
 
@@ -114,7 +76,12 @@
 
     function updateProgress() {
       document.getElementById("progress").innerHTML = `Сегодня сгенерировано: ${points.toFixed(3)} KWT <span id="spark">⚡</span>`;
-      
+      let percent = Math.min((points % 10) * 10, 100);
+      let fill = document.getElementById("energy-fill");
+      fill.style.width = percent + "%";
+      fill.classList.add("flash");
+      setTimeout(()=>fill.classList.remove("flash"), 300);
+
       // Анимация ⚡
       let spark = document.getElementById("spark");
       spark.style.animation = "spark 0.5s ease-out";
@@ -122,19 +89,8 @@
     }
 
     function showReward() {
-      // Тестовая генерация энергии
       alert("Вы сгенерировали 0.003 KWT энергии!");
       points += 0.003;
-
-      // Анимация станции
-      let stationSpark = document.getElementById("station-spark");
-      let station = document.getElementById("station");
-      stationSpark.style.opacity = 1;
-      station.style.transform = "scale(1.05)";
-      setTimeout(()=>{
-        stationSpark.style.opacity = 0; 
-        station.style.transform = "scale(1)";
-      }, 300);
 
       // Проверка уровня и бонусов
       let newLevel = Math.floor(points / 10) + 1;
