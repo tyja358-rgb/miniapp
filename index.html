@@ -1,43 +1,98 @@
-
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Mini App</title>
-
-  <!-- AdSonar SDK -->
+  <title>KWT Mini App ⚡</title>
   <script src="https://cdn.adsonar.io/ad.js"></script>
-  <script>
-    // Инициализация AdSonar
-    // Пока нет App ID, оставляем заглушку
-    window.onload = function() {
-      AdSonar.init({ appId: "ВАШ_APP_ID" });
-    };
-
-    // Функция для кнопки
-    function showReward() {
-      // Проверяем, что alert точно сработает
-      console.log("Кнопка нажата"); // для отладки в консоли
-      alert("Награда будет начисляться после подключения AdSonar!");
+  <style>
+    body { font-family: Arial; text-align: center; margin: 30px; background: #f0f8ff; }
+    h2 { color: #333; }
+    #rewardButton {
+      background-color: #4CAF50; color: white; font-size: 18px;
+      padding: 15px 30px; border-radius: 10px; cursor: pointer; margin-top: 20px;
+      transition: transform 0.1s, box-shadow 0.2s;
     }
-  </script>
+    #rewardButton:active { transform: scale(1.05); box-shadow: 0 0 20px #4CAF50; }
+    #progress { font-size: 16px; margin-top: 20px; }
+    #energy-bar {
+      width: 80%; height: 25px; background-color: #ccc; margin: 10px auto;
+      border-radius: 12px; overflow: hidden; box-shadow: inset 0 0 5px #0003;
+    }
+    #energy-fill {
+      height: 100%; width: 0%; background: linear-gradient(to right, #4CAF50, #00FFAA);
+      transition: width 0.5s;
+    }
+    #bonus { font-size: 16px; color: #ff4500; margin-top: 10px; }
+    #spark { font-size: 24px; display: inline-block; margin-left: 10px; animation: spark 0.5s ease-out; }
+    @keyframes spark {
+      0% { transform: scale(0); opacity: 0; }
+      50% { transform: scale(1.5); opacity: 1; }
+      100% { transform: scale(1); opacity: 0; }
+    }
+    .flash { animation: flash 0.3s; }
+    @keyframes flash { 0% { background-color: yellow; } 100% { background-color: #4CAF50; } }
+  </style>
 </head>
 <body>
-  <h2>Добро пожаловать!</h2>
-  <p>Откройте Mini App и получайте награды:</p>
+  <h2>Добро пожаловать в KWT Mini App ⚡</h2>
+  <p>Собирайте энергию и получайте KWT:</p>
 
-  <!-- Рабочая тестовая кнопка -->
-  <button id="rewardButton">
-    Смотреть рекламу и получить награду
-  </button>
+  <div id="energy-bar"><div id="energy-fill"></div></div>
+  <p id="progress">Сегодня сгенерировано: 0 KWT <span id="spark">⚡</span></p>
+  <p id="bonus"></p>
+
+  <button id="rewardButton">Смотреть рекламу и получить KWT</button>
 
   <p>Ссылка на Telegram-бота: 
     <a href="http://telegram.me/Kwt_pool_bot" target="_blank">Открыть бота</a>
   </p>
 
   <script>
-    // Привязываем кнопку через JS, чтобы точно срабатывала
+    // Инициализация AdSonar (пока тестовая заглушка)
+    AdSonar.init({ appId: "ВАШ_APP_ID" });
+
+    let points = parseFloat(localStorage.getItem("points")) || 0;
+    let level = Math.floor(points / 10) + 1;
+
+    function updateProgress() {
+      document.getElementById("progress").innerHTML = `Сегодня сгенерировано: ${points.toFixed(3)} KWT <span id="spark">⚡</span>`;
+      let percent = Math.min((points % 10) * 10, 100);
+      let fill = document.getElementById("energy-fill");
+      fill.style.width = percent + "%";
+      fill.classList.add("flash");
+      setTimeout(()=>fill.classList.remove("flash"), 300);
+
+      // Анимация ⚡
+      let spark = document.getElementById("spark");
+      spark.style.animation = "spark 0.5s ease-out";
+      setTimeout(()=>{ spark.style.animation = ""; }, 500);
+    }
+
+    function showReward() {
+      // Тестовая заглушка
+      alert("Вы сгенерировали 0.003 KWT энергии!");
+      points += 0.003;
+
+      // Проверка уровня и бонусов
+      let newLevel = Math.floor(points / 10) + 1;
+      if(newLevel > level) {
+        level = newLevel;
+        document.getElementById("bonus").innerText = `🎉 Поздравляем! Вы достигли уровня ${level}! Бонус начислен!`;
+      } else {
+        document.getElementById("bonus").innerText = "";
+      }
+
+      localStorage.setItem("points", points);
+      updateProgress();
+
+      // Когда придёт App ID:
+      // AdSonar.showRewarded();
+    }
+
     document.getElementById("rewardButton").addEventListener("click", showReward);
+
+    // Обновление при загрузке
+    updateProgress();
   </script>
 </body>
 </html>
