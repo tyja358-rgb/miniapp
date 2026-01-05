@@ -63,7 +63,7 @@
 </head>
 <body>
   <h2>KWT Mini App ⚡ Плазменная башня</h2>
-  <p>Кабинет: <span id="user-id">User123</span></p>
+  <p>Кабинет: <span id="user-id">User</span></p>
 
   <h3>Энергия за рекламу (для апгрейдов)</h3>
   <div class="bar-container"><div id="ad-energy-fill" class="bar-fill"></div></div>
@@ -87,16 +87,14 @@
   <button id="withdraw-money">Вывести в TON</button>
 
   <script>
-    // --------------------------
-    // 1. Telegram ID пользователя
-    // --------------------------
-    window.Telegram.WebApp.ready();
-    let userId = window.Telegram.WebApp.initDataUnsafe.user.id;
-    document.getElementById("user-id").innerText = "ID: " + userId;
+    // Инициализация Telegram WebApp
+    const tg = window.Telegram.WebApp;
+    const user = tg.initDataUnsafe.user;  // Telegram передаёт объект user
+    const userId = user.id;               // уникальный ID
+    const userName = user.first_name || "Игрок";
+    document.getElementById("user-id").innerText = userName;
 
-    // --------------------------
-    // 2. Балансы пользователя
-    // --------------------------
+    // Балансы привязаны к userId
     let adEnergy = parseFloat(localStorage.getItem(userId+"_adEnergy")) || 0;
     let money = parseFloat(localStorage.getItem(userId+"_money")) || 0;
 
@@ -107,39 +105,36 @@
       document.getElementById("money-fill").style.width = Math.min(money/100*100,100)+"%";
     }
 
-    function saveData() {
-      localStorage.setItem(userId+"_adEnergy", adEnergy);
-      localStorage.setItem(userId+"_money", money);
-    }
-
-    // --------------------------
-    // 3. Кнопки
-    // --------------------------
-    document.getElementById("watch-ad").addEventListener("click", function() {
+    function watchAd() {
       adEnergy += 1;
-      saveData();
+      localStorage.setItem(userId+"_adEnergy", adEnergy);
       updateBars();
       alert("Вы получили 1 рекламной энергии!");
-    });
+    }
 
-    document.getElementById("upgrade-station").addEventListener("click", function() {
-      if(adEnergy >= 5){
+    function upgradeStation() {
+      if(adEnergy >= 5) {
         adEnergy -= 5;
-        saveData();
+        localStorage.setItem(userId+"_adEnergy", adEnergy);
         updateBars();
         alert("Башня улучшена!");
         document.getElementById("plasma").style.animationDuration = "0.7s";
       } else alert("Недостаточно энергии!");
-    });
+    }
 
-    document.getElementById("withdraw-money").addEventListener("click", function() {
-      if(money > 0){
-        alert(`Вы вывели ${money.toFixed(2)} KWT в TON через Telegram`);
+    function withdrawMoney() {
+      if(money > 0) {
+        let amt = money.toFixed(2);
         money = 0;
-        saveData();
+        localStorage.setItem(userId+"_money", money);
         updateBars();
+        alert(`Вы вывели ${amt} KWT в TON через Telegram`);
       } else alert("Баланс пустой!");
-    });
+    }
+
+    document.getElementById("watch-ad").addEventListener("click", watchAd);
+    document.getElementById("upgrade-station").addEventListener("click", upgradeStation);
+    document.getElementById("withdraw-money").addEventListener("click", withdrawMoney);
 
     updateBars();
   </script>
