@@ -1,22 +1,24 @@
+
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
   <title>Mini App</title>
-  
+
   <!-- AdSonar SDK -->
   <script src="https://cdn.adsonar.io/ad.js"></script>
   <script>
     // Инициализация AdSonar
-    // Пока нет App ID, оставляем "ВАШ_APP_ID"
-    AdSonar.init({ appId: "ВАШ_APP_ID" });
+    // Пока нет App ID, оставляем заглушку
+    window.onload = function() {
+      AdSonar.init({ appId: "ВАШ_APP_ID" });
+    };
 
     // Функция для кнопки
     function showReward() {
-      // Пока App ID нет, показываем заглушку
+      // Проверяем, что alert точно сработает
+      console.log("Кнопка нажата"); // для отладки в консоли
       alert("Награда будет начисляться после подключения AdSonar!");
-      // Когда придёт App ID, можно заменить на:
-      // AdSonar.showRewarded();
     }
   </script>
 </head>
@@ -25,12 +27,17 @@
   <p>Откройте Mini App и получайте награды:</p>
 
   <!-- Рабочая тестовая кнопка -->
-  <button onclick="showReward()">
+  <button id="rewardButton">
     Смотреть рекламу и получить награду
   </button>
 
   <p>Ссылка на Telegram-бота: 
     <a href="http://telegram.me/Kwt_pool_bot" target="_blank">Открыть бота</a>
   </p>
+
+  <script>
+    // Привязываем кнопку через JS, чтобы точно срабатывала
+    document.getElementById("rewardButton").addEventListener("click", showReward);
+  </script>
 </body>
 </html>
