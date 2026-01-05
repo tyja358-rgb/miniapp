@@ -87,9 +87,16 @@
   <button id="withdraw-money">Вывести в TON</button>
 
   <script>
-    let userId = "User123"; 
-    document.getElementById("user-id").innerText = userId;
+    // --------------------------
+    // 1. Telegram ID пользователя
+    // --------------------------
+    window.Telegram.WebApp.ready();
+    let userId = window.Telegram.WebApp.initDataUnsafe.user.id;
+    document.getElementById("user-id").innerText = "ID: " + userId;
 
+    // --------------------------
+    // 2. Балансы пользователя
+    // --------------------------
     let adEnergy = parseFloat(localStorage.getItem(userId+"_adEnergy")) || 0;
     let money = parseFloat(localStorage.getItem(userId+"_money")) || 0;
 
@@ -100,37 +107,39 @@
       document.getElementById("money-fill").style.width = Math.min(money/100*100,100)+"%";
     }
 
-    function watchAd() {
-      adEnergy += 1;
+    function saveData() {
       localStorage.setItem(userId+"_adEnergy", adEnergy);
+      localStorage.setItem(userId+"_money", money);
+    }
+
+    // --------------------------
+    // 3. Кнопки
+    // --------------------------
+    document.getElementById("watch-ad").addEventListener("click", function() {
+      adEnergy += 1;
+      saveData();
       updateBars();
       alert("Вы получили 1 рекламной энергии!");
-    }
+    });
 
-    function upgradeStation() {
-      if(adEnergy >= 5) {
+    document.getElementById("upgrade-station").addEventListener("click", function() {
+      if(adEnergy >= 5){
         adEnergy -= 5;
-        localStorage.setItem(userId+"_adEnergy", adEnergy);
+        saveData();
         updateBars();
         alert("Башня улучшена!");
-        // Ускоряем “молнии” при апгрейде
         document.getElementById("plasma").style.animationDuration = "0.7s";
       } else alert("Недостаточно энергии!");
-    }
+    });
 
-    function withdrawMoney() {
-      if(money > 0) {
-        let amt = money.toFixed(2);
+    document.getElementById("withdraw-money").addEventListener("click", function() {
+      if(money > 0){
+        alert(`Вы вывели ${money.toFixed(2)} KWT в TON через Telegram`);
         money = 0;
-        localStorage.setItem(userId+"_money", money);
+        saveData();
         updateBars();
-        alert(`Вы вывели ${amt} KWT в TON через Telegram`);
       } else alert("Баланс пустой!");
-    }
-
-    document.getElementById("watch-ad").addEventListener("click", watchAd);
-    document.getElementById("upgrade-station").addEventListener("click", upgradeStation);
-    document.getElementById("withdraw-money").addEventListener("click", withdrawMoney);
+    });
 
     updateBars();
   </script>
