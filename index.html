@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -40,15 +41,39 @@
     /* Контейнер станции */
     #station-container {
       position: relative; 
-      width: 200px; 
+      width: 150px; 
       height: 200px; 
       margin: 20px auto;
     }
+    /* Самая станция */
     #station {
-      width:100%; 
-      height:100%;
+      width: 100%; 
+      height: 100%; 
+      background: linear-gradient(to top, #888 0%, #ccc 100%);
+      border-radius: 10px 10px 0 0;
+      position: relative;
+      box-shadow: inset 0 0 20px #fff4, 0 0 10px #0003;
       transition: transform 0.3s;
     }
+    /* Огни станции */
+    #station::before, #station::after {
+      content: '';
+      position: absolute;
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: yellow;
+      top: 20px;
+      left: 20px;
+      box-shadow: 50px 0 yellow;
+      opacity: 0.7;
+      animation: blink 1s infinite alternate;
+    }
+    @keyframes blink {
+      0% { opacity: 0.2; }
+      50% { opacity: 1; }
+      100% { opacity: 0.2; }
+    }
+    /* Вспышка при генерации */
     #station-spark {
       position:absolute; 
       top:0; left:0; 
@@ -65,9 +90,9 @@
   <h2>Добро пожаловать в KWT Mini App ⚡</h2>
   <p>Собирайте энергию и получайте KWT:</p>
 
-  <!-- Центральная станция -->
+  <!-- Центральная CSS-станция -->
   <div id="station-container">
-    <img id="station" src="https://i.imgur.com/5qJ6e0G.png" alt="Станция"/>
+    <div id="station"></div>
     <div id="station-spark"></div>
   </div>
 
