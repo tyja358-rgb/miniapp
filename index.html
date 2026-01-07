@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <title>KWT ⚡ Скидки рядом</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -12,11 +11,7 @@
       margin: 0;
       padding: 15px;
     }
-
-    h2 {
-      text-align: center;
-    }
-
+    h2 { text-align: center; }
     .card {
       background: #fff;
       padding: 15px;
@@ -24,39 +19,13 @@
       margin-bottom: 15px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.08);
     }
-
-    input, button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 8px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      font-size: 15px;
-    }
-
-    button {
-      background: #4CAF50;
-      color: #fff;
-      border: none;
-      cursor: pointer;
-    }
-
-    img {
-      max-width: 100%;
-      border-radius: 8px;
-      margin-top: 10px;
-    }
-
-    .product {
-      border-bottom: 1px solid #eee;
-      padding: 10px 0;
-    }
-
-    .category {
-      font-weight: bold;
-      color: #4CAF50;
-    }
-
+    input, button { width: 100%; padding: 10px; margin-top: 8px; border-radius: 6px; border: 1px solid #ccc; font-size: 15px; }
+    button { background: #4CAF50; color: #fff; border: none; cursor: pointer; }
+    button.secondary { background: #2196F3; }
+    button:disabled { background: #999; cursor: not-allowed; }
+    img { max-width: 100%; border-radius: 8px; margin-top: 10px; position: relative; }
+    .product { border-bottom: 1px solid #eee; padding: 10px 0; position: relative; }
+    .category { font-weight: bold; color: #4CAF50; }
     .ad-screen {
       position: fixed;
       inset: 0;
@@ -67,29 +36,35 @@
       justify-content: center;
       flex-direction: column;
       z-index: 999;
-      font-size: 20px;
     }
+    .discount-badge {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: #e53935;
+      color: #fff;
+      font-weight: bold;
+      padding: 5px 8px;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    .warning { color: #d9534f; font-weight: bold; margin-top: 5px; }
   </style>
 </head>
-
 <body>
 
 <h2>⚡ Скидки рядом</h2>
 
 <div class="card">
   <h3>Добавить скидку</h3>
-
-  <!-- скрытая камера -->
-  <input type="file" id="photo" accept="image/*" capture="environment" style="display:none;">
+  <input type="file" id="photo" accept="image/*" capture="environment">
   <img id="preview" style="display:none;">
-
   <input type="text" id="productName" placeholder="Название товара">
-  <input type="number" id="discount" placeholder="Скидка % (от 20)">
+  <input type="number" id="priceBefore" placeholder="Цена до">
+  <input type="number" id="priceAfter" placeholder="Цена после">
   <input type="text" id="store" placeholder="Магазин">
   <input type="text" id="address" placeholder="Адрес магазина">
-
-  <!-- ОДНА КНОПКА -->
-  <button id="addBtn">➕ Добавить товар</button>
+  <button id="addBtn">Добавить товар</button>
 </div>
 
 <div class="card">
@@ -97,15 +72,13 @@
   <div id="list"></div>
 </div>
 
-<!-- ЭКРАН РЕКЛАМЫ -->
 <div class="ad-screen" id="adScreen">
-  <div>📢 Реклама</div>
-  <div>Поддержите проект</div>
-  <div id="adTimer">5</div>
+  <h2>📢 Реклама</h2>
+  <p>Реклама помогает развивать проект</p>
+  <p id="adTimer">5</p>
 </div>
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
 <script>
   const photoInput = document.getElementById('photo');
   const preview = document.getElementById('preview');
@@ -115,12 +88,11 @@
   const adTimer = document.getElementById('adTimer');
 
   let photoData = null;
+  const products = [];
 
-  // загрузка фото
   photoInput.addEventListener('change', () => {
     const file = photoInput.files[0];
     if (!file) return;
-
     const reader = new FileReader();
     reader.onload = e => {
       photoData = e.target.result;
@@ -134,8 +106,8 @@
     const t = name.toLowerCase();
     if (t.includes('авто')) return 'Авто';
     if (t.includes('еда') || t.includes('кафе')) return 'Еда';
-    if (t.includes('одеж')) return 'Одежда';
     if (t.includes('билет')) return 'Путешествия';
+    if (t.includes('одеж')) return 'Одежда';
     return 'Другое';
   }
 
@@ -143,7 +115,6 @@
     let time = 5;
     adTimer.innerText = time;
     adScreen.style.display = 'flex';
-
     const interval = setInterval(() => {
       time--;
       adTimer.innerText = time;
@@ -155,51 +126,66 @@
     }, 1000);
   }
 
-  // ГЛАВНАЯ ЛОГИКА
+  function renderProducts() {
+    list.innerHTML = '';
+    const now = Date.now();
+    products.forEach(p => {
+      const div = document.createElement('div');
+      div.className = 'product';
+      const discountPercent = Math.round((1 - p.priceAfter / p.priceBefore) * 100);
+      const expired24 = now > p.added + 24*60*60*1000 && now <= p.added + 72*60*60*1000;
+      div.innerHTML = `
+        <div class="category">${p.category}</div>
+        <strong>${p.name}</strong><br>
+        ${p.store}, ${p.address}<br>
+        <div>Цена: <s>${p.priceBefore}</s> → ${p.priceAfter} (${discountPercent}%)</div>
+        <div style="position:relative;">
+          <img src="${p.photo}">
+          <div class="discount-badge">-${discountPercent}%</div>
+        </div>
+        ${expired24 ? '<div class="warning">⚠ Скидка ещё действительна, но не обновлялась</div>' : ''}
+      `;
+      list.prepend(div);
+    });
+  }
+
   addBtn.addEventListener('click', () => {
-
-    // если фото нет — открыть камеру
-    if (!photoData) {
-      photoInput.click();
-      return;
-    }
-
-    const name = productName.value.trim();
-    const discount = Number(document.getElementById('discount').value);
+    const name = document.getElementById('productName').value.trim();
+    const priceBefore = Number(document.getElementById('priceBefore').value);
+    const priceAfter = Number(document.getElementById('priceAfter').value);
     const store = document.getElementById('store').value.trim();
     const address = document.getElementById('address').value.trim();
 
-    if (!name || !store || !address || discount < 20) {
-      alert('Заполните все поля и скидку от 20%');
+    if (!photoData || !name || !store || !address || priceBefore <= 0 || priceAfter <= 0 || priceAfter >= priceBefore) {
+      alert('Заполните все поля и убедитесь, что цена после < цена до');
+      return;
+    }
+
+    const duplicate = products.find(p => p.name.toLowerCase() === name.toLowerCase() && p.store.toLowerCase() === store.toLowerCase());
+    if (duplicate) {
+      alert('Такой товар уже добавлен в базе!');
       return;
     }
 
     showAd(() => {
       const category = detectCategory(name);
-
-      const div = document.createElement('div');
-      div.className = 'product';
-      div.innerHTML = `
-        <div class="category">${category}</div>
-        <strong>${name}</strong><br>
-        ${store}, ${address}<br>
-        Скидка: ${discount}%<br>
-        <img src="${photoData}">
-      `;
-      list.prepend(div);
+      products.push({name, store, address, priceBefore, priceAfter, category, photo: photoData, added: Date.now()});
+      renderProducts();
 
       // очистка
-      photoData = null;
       photoInput.value = '';
       preview.style.display = 'none';
-      productName.value = '';
-      discount.value = '';
-      store.value = '';
-      address.value = '';
+      document.getElementById('productName').value = '';
+      document.getElementById('priceBefore').value = '';
+      document.getElementById('priceAfter').value = '';
+      document.getElementById('store').value = '';
+      document.getElementById('address').value = '';
 
-      alert('✅ Товар добавлен. Ваша информация о скидке бесценна.');
+      alert('✅ Товар добавлен. Спасибо, ваша информация бесценна.');
     });
   });
+
+  renderProducts();
 </script>
 
 </body>
