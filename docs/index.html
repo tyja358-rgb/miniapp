@@ -1,150 +1,160 @@
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
 
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>KWT Mini App ⚡ Плазменная башня</title>
-  <style>
-    body { font-family: Arial, sans-serif; text-align: center; margin: 30px; background: #f0f8ff; }
-    h2 { color: #333; }
-    button {
-      background-color: #4CAF50; color: white; font-size: 16px;
-      padding: 10px 25px; border-radius: 8px; cursor: pointer; margin: 10px;
-      transition: transform 0.1s, box-shadow 0.2s;
-    }
-    button:active { transform: scale(1.05); box-shadow: 0 0 15px #4CAF50; }
+<script>
+  // ===== Firebase config =====
+  const firebaseConfig = {
+    apiKey: "AIzaSyBJWrVFGL0lt8zMfQH8rrYMOj8CWFVsUCg",
+    authDomain: "kwt-discounts.firebaseapp.com",
+    projectId: "kwt-discounts",
+    storageBucket: "kwt-discounts.firebasestorage.app",
+    messagingSenderId: "980335677636",
+    appId: "1:980335677636:web:a0566f81b81702af60b991"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
 
-    .bar-container { width: 80%; height: 25px; background-color: #ccc; margin: 10px auto; border-radius: 12px; overflow: hidden; box-shadow: inset 0 0 5px #0003; }
-    .bar-fill { height: 100%; width: 0%; background: linear-gradient(to right, #4CAF50, #00FFAA); transition: width 0.5s; }
+  // ===== Анонимная авторизация =====
+  firebase.auth().signInAnonymously()
+    .then(() => { console.log("Signed in anonymously"); })
+    .catch(err => { console.error("Auth error:", err.code, err.message); });
 
-    /* Башня Эйфелева */
-    #station-container { position: relative; width: 120px; height: 250px; margin: 20px auto; }
-    .tower-level {
-      position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
-      background: #555; border-radius: 4px;
-      clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
-    }
-    #level1 { width: 120px; height: 60px; bottom: 0; }
-    #level2 { width: 90px; height: 50px; bottom: 60px; }
-    #level3 { width: 60px; height: 40px; bottom: 110px; }
-    #level4 { width: 40px; height: 30px; bottom: 150px; }
-    #level5 { width: 20px; height: 40px; bottom: 180px; }
+  // ===== Энергия =====
+  const maxEnergy = 5;
+  let energy = Number(localStorage.getItem('energy')) || 0;
+  energy = Math.min(energy, maxEnergy);
+  const energySpan = document.getElementById('energySpan');
+  const energyBar = document.getElementById('energyBar');
+  function updateEnergyBar() {
+    const percent = (energy / maxEnergy) * 100;
+    energyBar.style.width = percent + '%';
+    energySpan.innerText = energy;
+  }
+  updateEnergyBar();
 
-    /* Плазменный шар сверху */
-    #plasma {
-      position: absolute; bottom: 220px; left: 50%; transform: translateX(-50%);
-      width: 50px; height: 50px; border-radius: 50%;
-      background: radial-gradient(circle at center, #0ff, #004, #000);
-      box-shadow: 0 0 30px #0ff, 0 0 60px #0ff inset;
-      overflow: hidden;
-      animation: plasma-glow 1s infinite alternate;
-    }
+  // ===== Экраны =====
+  const homeScreen = document.getElementById('homeScreen');
+  const addScreen = document.getElementById('addScreen');
+  const findScreen = document.getElementById('findScreen');
+  const photoInput = document.getElementById('photo');
+  const preview = document.getElementById('preview');
+  let photoData = null;
 
-    /* Молнии в шаре */
-    #plasma::before {
-      content: '';
-      position: absolute; top:0; left:0; width:100%; height:100%;
-      background: repeating-linear-gradient(45deg, rgba(0,255,255,0.4), rgba(0,255,255,0.4) 2px, transparent 2px, transparent 4px);
-      animation: plasma-strike 0.3s linear infinite;
-    }
+  // ===== Навигация =====
+  document.getElementById('addDiscountBtn').onclick = ()=>{homeScreen.classList.remove('active'); addScreen.classList.add('active');}
+  document.getElementById('findDiscountBtn').onclick = ()=>{homeScreen.classList.remove('active'); findScreen.classList.add('active');}
+  document.getElementById('backHome1').onclick = ()=>{addScreen.classList.remove('active'); homeScreen.classList.add('active');}
+  document.getElementById('backHome2').onclick = ()=>{findScreen.classList.remove('active'); homeScreen.classList.add('active');}
 
-    @keyframes plasma-glow {
-      0% { box-shadow: 0 0 30px #0ff, 0 0 60px #0ff inset; }
-      100% { box-shadow: 0 0 50px #0ff, 0 0 80px #0ff inset; }
-    }
+  // ===== Фото =====
+  photoInput.addEventListener('change', () => {
+    const file = photoInput.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      photoData = e.target.result;
+      preview.src = photoData;
+      preview.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  });
 
-    @keyframes plasma-strike {
-      0% { transform: translateX(0) translateY(0); opacity: 0.7; }
-      50% { transform: translateX(-5px) translateY(3px); opacity: 1; }
-      100% { transform: translateX(5px) translateY(-3px); opacity: 0.7; }
-    }
+  // ===== Категории =====
+  function detectCategory(name){
+    const t = name.toLowerCase();
+    if(t.includes('авто')) return 'Авто';
+    if(t.includes('еда')||t.includes('кафе')||t.includes('ресторан')) return 'Еда';
+    if(t.includes('билет')) return 'Путешествия';
+    if(t.includes('одеж')) return 'Одежда';
+    return 'Другое';
+  }
 
-    #ad-energy, #money { font-weight: bold; }
-  </style>
-</head>
-<body>
-  <h2>KWT Mini App ⚡ Плазменная башня</h2>
-  <p>Кабинет: <span id="user-id">Loading...</span></p>
+  // ===== Реклама =====
+  const adScreen = document.getElementById('adScreen');
+  const adTimer = document.getElementById('adTimer');
+  function showAd(callback){
+    let time = 5;
+    adTimer.innerText = time;
+    adScreen.style.display = 'flex';
+    const interval = setInterval(()=>{
+      time--;
+      adTimer.innerText = time;
+      if(time<=0){clearInterval(interval); adScreen.style.display='none'; callback();}
+    },1000);
+  }
 
-  <h3>Энергия за рекламу (для апгрейдов)</h3>
-  <div class="bar-container"><div id="ad-energy-fill" class="bar-fill"></div></div>
-  <p>Баланс рекламной энергии: <span id="ad-energy">0</span></p>
-  <button id="watch-ad">Смотреть рекламу</button>
-  <button id="upgrade-station">Прокачать башню (-5 энергии)</button>
+  // ===== Заработать энергию =====
+  document.getElementById('earnEnergyBtn').addEventListener('click', ()=>{
+    showAd(()=>{
+      if(energy<maxEnergy) energy++;
+      localStorage.setItem('energy',energy);
+      updateEnergyBar();
+      alert('✅ Вы получили 1 энергию!');
+    });
+  });
 
-  <h3>Электростанция</h3>
-  <div id="station-container">
-    <div id="level1" class="tower-level"></div>
-    <div id="level2" class="tower-level"></div>
-    <div id="level3" class="tower-level"></div>
-    <div id="level4" class="tower-level"></div>
-    <div id="level5" class="tower-level"></div>
-    <div id="plasma"></div>
-  </div>
+  // ===== Добавить товар =====
+  const addBtn = document.getElementById('addBtn');
+  addBtn.addEventListener('click',()=>{
+    const name = document.getElementById('productName').value.trim();
+    const priceBefore = parseFloat(document.getElementById('priceBefore').value);
+    const priceAfter = parseFloat(document.getElementById('priceAfter').value);
+    const store = document.getElementById('store').value.trim();
+    const address = document.getElementById('address').value.trim();
 
-  <h3>Денежная шкала (можно вывести в TON)</h3>
-  <div class="bar-container"><div id="money-fill" class="bar-fill"></div></div>
-  <p>Баланс денег: <span id="money">0</span> KWT</p>
-  <button id="withdraw-money">Вывести в TON</button>
-
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script>
-    // Получаем Telegram user
-    let userId = "User123";
-    let userName = "User123";
-
-    if (window.Telegram.WebApp) {
-      const tgUser = Telegram.WebApp.initDataUnsafe?.user;
-      if (tgUser) {
-        userId = tgUser.id;
-        userName = tgUser.first_name || tgUser.username || "User" + userId;
-      }
-    }
-
-    document.getElementById("user-id").innerText = userName;
-
-    let adEnergy = parseFloat(localStorage.getItem(userId+"_adEnergy")) || 0;
-    let money = parseFloat(localStorage.getItem(userId+"_money")) || 0;
-
-    function updateBars() {
-      document.getElementById("ad-energy").innerText = adEnergy.toFixed(2);
-      document.getElementById("money").innerText = money.toFixed(2);
-      document.getElementById("ad-energy-fill").style.width = Math.min(adEnergy/20*100,100)+"%";
-      document.getElementById("money-fill").style.width = Math.min(money/100*100,100)+"%";
+    if(!photoData || !name || !store || !address || isNaN(priceBefore) || isNaN(priceAfter)){
+      alert('Заполните все поля корректно!');
+      return;
     }
 
-    function watchAd() {
-      adEnergy += 1;
-      localStorage.setItem(userId+"_adEnergy", adEnergy);
-      updateBars();
-      alert("Вы получили 1 рекламной энергии!");
+    const discount = ((priceBefore-priceAfter)/priceBefore*100).toFixed(0);
+    if(discount<20){alert('Скидка должна быть не меньше 20%'); return;}
+
+    function saveProduct(){
+      const category = detectCategory(name);
+      db.collection('products').add({
+        name, priceBefore, priceAfter, discount, store, address, category, photo: photoData, timestamp: Date.now()
+      }).then(()=>{
+        // Очистка полей
+        photoInput.value=''; preview.style.display='none'; photoData=null;
+        document.getElementById('productName').value='';
+        document.getElementById('priceBefore').value='';
+        document.getElementById('priceAfter').value='';
+        document.getElementById('store').value='';
+        document.getElementById('address').value='';
+        updateEnergyBar();
+        setTimeout(()=>{ addScreen.classList.remove('active'); homeScreen.classList.add('active'); }, 100);
+        alert('✅ Товар добавлен! Ваша информация бесценна.');
+      }).catch(err=>{
+        console.error(err);
+        alert('Ошибка при добавлении товара: ' + err.message);
+      });
     }
 
-    function upgradeStation() {
-      if(adEnergy >= 5) {
-        adEnergy -= 5;
-        localStorage.setItem(userId+"_adEnergy", adEnergy);
-        updateBars();
-        alert("Башня улучшена!");
-        document.getElementById("plasma").style.animationDuration = "0.7s";
-      } else alert("Недостаточно энергии!");
+    if(energy>0){
+      energy--; localStorage.setItem('energy',energy);
+      updateEnergyBar();
+      saveProduct();
+    } else {
+      showAd(saveProduct);
     }
+  });
 
-    function withdrawMoney() {
-      if(money > 0) {
-        let amt = money.toFixed(2);
-        money = 0;
-        localStorage.setItem(userId+"_money", money);
-        updateBars();
-        alert(`Вы вывели ${amt} KWT в TON через Telegram`);
-      } else alert("Баланс пустой!");
-    }
-
-    document.getElementById("watch-ad").addEventListener("click", watchAd);
-    document.getElementById("upgrade-station").addEventListener("click", upgradeStation);
-    document.getElementById("withdraw-money").addEventListener("click", withdrawMoney);
-
-    updateBars();
-  </script>
-</body>
-</html>
+  // ===== Отображение товаров =====
+  const list = document.getElementById('list');
+  db.collection('products').orderBy('timestamp','desc').onSnapshot(snapshot=>{
+    list.innerHTML='';
+    snapshot.forEach(doc=>{
+      const data = doc.data();
+      const div = document.createElement('div');
+      div.className='product';
+      div.innerHTML = `<div class="category">${data.category}</div>
+        <strong>${data.name}</strong><br>
+        ${data.store}, ${data.address}<br>
+        Цена: ${data.priceBefore} → ${data.priceAfter} (${data.discount}%)<br>
+        <img src="${data.photo}">`;
+      list.appendChild(div);
+    });
+  });
+</script>
