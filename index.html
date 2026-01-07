@@ -2,121 +2,105 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>KWT Mini App ⚡ Магазин скидок</title>
+  <title>KWT Mini App ⚡ Скидки</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; background: #f7f7f7; }
-    h2 { text-align: center; }
-    select, input, button { padding: 5px 10px; margin: 5px; }
-    .category { font-weight: bold; margin-top: 20px; }
-    .product { border: 1px solid #ccc; padding: 10px; margin: 5px 0; border-radius: 8px; background: #fff; }
-    .product img { max-width: 100px; display: block; margin-bottom: 5px; }
-    .hidden { display: none; }
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f0f8ff; }
+    h2 { color: #333; text-align: center; }
+    input, button { padding: 8px; margin: 5px; border-radius: 5px; }
+    .product { border: 1px solid #ccc; padding: 10px; margin: 10px; border-radius: 8px; background: #fff; }
+    .category { font-weight: bold; color: #4CAF50; }
+    img { max-width: 150px; display: block; margin-top: 5px; }
   </style>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
 </head>
 <body>
-  <h2>KWT Mini App ⚡ Магазин скидок</h2>
+  <h2>KWT Mini App ⚡ Скидки</h2>
 
-  <div>
-    <label>Выберите категорию для просмотра товаров:</label>
-    <select id="category-filter">
-      <option value="all">Все</option>
-      <option value="Авто">Авто</option>
-      <option value="Канцелярия">Канцелярия</option>
-      <option value="Еда">Еда</option>
-      <option value="Вещи">Вещи</option>
-      <option value="Авиабилеты">Авиабилеты</option>
-    </select>
-  </div>
+  <h3>Добавить товар со скидкой</h3>
+  <input type="text" id="name" placeholder="Название товара"><br>
+  <input type="text" id="store" placeholder="Магазин"><br>
+  <input type="text" id="img" placeholder="Ссылка на фото"><br>
+  <input type="number" id="discount" placeholder="Скидка %"><br>
+  <button id="add-product">Добавить товар</button>
 
-  <div id="products-container"></div>
-
-  <hr>
-
-  <h3>Добавить товар (Предприниматель)</h3>
-  <div>
-    <label>Ваш ID:</label>
-    <input type="text" id="owner-id" placeholder="shop_123"><br>
-    <label>Категория:</label>
-    <select id="category-select">
-      <option value="Авто">Авто</option>
-      <option value="Канцелярия">Канцелярия</option>
-      <option value="Еда">Еда</option>
-      <option value="Вещи">Вещи</option>
-      <option value="Авиабилеты">Авиабилеты</option>
-    </select><br>
-    <label>Название товара:</label>
-    <input type="text" id="product-name" placeholder="Шоколад"><br>
-    <label>Фото (URL):</label>
-    <input type="text" id="product-photo" placeholder="https://example.com/image.jpg"><br>
-    <label>Скидка:</label>
-    <input type="text" id="product-discount" placeholder="15%"><br>
-    <label>Описание:</label>
-    <input type="text" id="product-desc" placeholder="Скидка до конца недели"><br>
-    <button id="add-product">Добавить товар</button>
-  </div>
+  <h3>Категории товаров</h3>
+  <div id="products"></div>
 
   <script>
-    // Хранилище товаров
-    let products = JSON.parse(localStorage.getItem("products")) || [];
+    // ===== Firebase config =====
+    const firebaseConfig = {
+      apiKey: "ТВОЙ_API_KEY",
+      authDomain: "ТВОЙ_PROJECT.firebaseapp.com",
+      projectId: "ТВОЙ_PROJECT",
+      storageBucket: "ТВОЙ_PROJECT.appspot.com",
+      messagingSenderId: "123456789",
+      appId: "1:123456789:web:abcdef"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-    const productsContainer = document.getElementById("products-container");
-    const categoryFilter = document.getElementById("category-filter");
+    // ===== Функция определения категории =====
+    function classify(name, store) {
+      let text = (name + " " + store).toLowerCase();
+      if(text.includes("авто")) return "Авто";
+      if(text.includes("еда")) return "Еда";
+      if(text.includes("канцелярия")) return "Канцелярия";
+      if(text.includes("вещи")) return "Вещи";
+      if(text.includes("авиабилет")) return "Авиабилеты";
+      return "Другое";
+    }
 
-    function renderProducts(filter="all") {
-      productsContainer.innerHTML = "";
-      products.forEach(p => {
-        if(filter !== "all" && p.category !== filter) return;
+    // ===== Добавление товара =====
+    document.getElementById("add-product").addEventListener("click", async () => {
+      const name = document.getElementById("name").value.trim();
+      const store = document.getElementById("store").value.trim();
+      const img = document.getElementById("img").value.trim();
+      const discount = parseFloat(document.getElementById("discount").value);
+
+      if(!name || !store || !img || isNaN(discount)){
+        alert("Заполните все поля корректно!");
+        return;
+      }
+
+      if(discount < 20){
+        alert("Скидка должна быть не меньше 20%");
+        return;
+      }
+
+      const category = classify(name, store);
+
+      try {
+        await db.collection("products").add({name, store, img, discount, category});
+        alert("Товар добавлен!");
+        document.getElementById("name").value="";
+        document.getElementById("store").value="";
+        document.getElementById("img").value="";
+        document.getElementById("discount").value="";
+      } catch(e) {
+        console.error(e);
+        alert("Ошибка при добавлении товара!");
+      }
+    });
+
+    // ===== Отображение товаров =====
+    db.collection("products").orderBy("category").onSnapshot(snapshot => {
+      const container = document.getElementById("products");
+      container.innerHTML = "";
+      snapshot.forEach(doc => {
+        const data = doc.data();
         const div = document.createElement("div");
         div.className = "product";
         div.innerHTML = `
-          <div class="category">${p.category}</div>
-          <img src="${p.photo}" alt="${p.name}">
-          <div><b>${p.name}</b></div>
-          <div>Скидка: ${p.discount}</div>
-          <div>${p.description}</div>
-          <div>Владелец: ${p.owner}</div>
+          <div class="category">${data.category}</div>
+          <div><strong>${data.name}</strong></div>
+          <div>Магазин: ${data.store}</div>
+          <div>Скидка: ${data.discount}%</div>
+          <img src="${data.img}" alt="${data.name}">
         `;
-        productsContainer.appendChild(div);
+        container.appendChild(div);
       });
-    }
-
-    renderProducts();
-
-    categoryFilter.addEventListener("change", () => {
-      renderProducts(categoryFilter.value);
-    });
-
-    // Добавление товара
-    document.getElementById("add-product").addEventListener("click", () => {
-      const owner = document.getElementById("owner-id").value.trim();
-      const category = document.getElementById("category-select").value;
-      const name = document.getElementById("product-name").value.trim();
-      const photo = document.getElementById("product-photo").value.trim();
-      const discount = document.getElementById("product-discount").value.trim();
-      const desc = document.getElementById("product-desc").value.trim();
-
-      if(!owner || !name || !photo) {
-        alert("Заполните ID, название и фото товара!");
-        return;
-      }
-
-      // Только владелец категории может добавлять товар
-      const allowedCategories = ["Авто","Канцелярия","Еда","Вещи","Авиабилеты"]; 
-      // можно потом сделать проверку прав
-      if(!allowedCategories.includes(category)) {
-        alert("У вас нет прав на эту категорию!");
-        return;
-      }
-
-      products.push({owner, category, name, photo, discount, description: desc});
-      localStorage.setItem("products", JSON.stringify(products));
-      renderProducts(categoryFilter.value);
-
-      // Очистка формы
-      document.getElementById("product-name").value = "";
-      document.getElementById("product-photo").value = "";
-      document.getElementById("product-discount").value = "";
-      document.getElementById("product-desc").value = "";
     });
   </script>
 </body>
