@@ -25,7 +25,7 @@ bot.onText(/\/start(?:\s+(\w+))?/, (msg, match) => {
     bot.sendMessage(chatId, 'Привет! Нажми на кнопку ниже, чтобы открыть Plasma Tower.', {
       reply_markup: {
         inline_keyboard: [
-          [{ text: 'Открыть Plasma Tower', url: 'https://newpublic.netlify.app' }]
+          [{ text: 'Открыть Plasma Tower', url: 'https://tyja358-rgb.github.io/miniapp/' }]
         ]
       }
     });
