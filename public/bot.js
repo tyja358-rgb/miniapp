@@ -1,37 +1,40 @@
 const TelegramBot = require('node-telegram-bot-api');
 
-// Вставь сюда токен своего бота от BotFather
-const TOKEN = '8465624288:AAGKPaKjgGKxOZ3e1xN4pFTI_gTzP3KiVjc';
+// Вставь сюда токен своего бота
+const token = '8465624288:AAGKPaKjgGKxOZ3e1xN4pFTI_gTzP3KiVjc';
 
-// Создаём бота
-const bot = new TelegramBot(TOKEN, { polling: true });
+// Запуск бота в режиме polling
+const bot = new TelegramBot(token, { polling: true });
 
-// Событие при старте
-bot.onText(/\/start/, (msg) => {
-    const chatId = msg.chat.id;
+// Обработка команды /start с необязательным параметром
+bot.onText(/\/start(?:\s+(\w+))?/, (msg, match) => {
+  const chatId = msg.chat.id;
+  const param = match[1];
 
-    // Настройка кнопки с URL на твой сайт
-    const options = {
-        reply_markup: {
-            inline_keyboard: [
-                [
-                    { text: "Открыть Plasma Tower", url: "https://newpublic.netlify.app" }
-                ]
-            ]
-        }
-    };
-
-    // Сообщение пользователю
-    bot.sendMessage(chatId, "Привет! Нажми кнопку ниже, чтобы сразу начать играть:", options);
+  if (param === 'play') {
+    // Если пользователь зашел с /start play — сразу кнопка "Играть"
+    bot.sendMessage(chatId, 'Добро пожаловать в Plasma Tower! 🎮\nНачинай играть по ссылке:', {
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: 'Играть', url: 'https://newpublic.netlify.app' }]
+        ]
+      }
+    });
+  } else {
+    // Обычное приветствие для просто /start
+    bot.sendMessage(chatId, 'Привет! Нажми на кнопку ниже, чтобы открыть Plasma Tower.', {
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: 'Открыть Plasma Tower', url: 'https://newpublic.netlify.app' }]
+        ]
+      }
+    });
+  }
 });
 
-// Пример обработки других команд (необязательно)
-bot.onText(/\/help/, (msg) => {
-    const chatId = msg.chat.id;
-    bot.sendMessage(chatId, "Это бот для игры Plasma Tower. Просто нажми кнопку и начинай играть!");
-});
-
-// Логирование всех сообщений (для отладки)
+// Можно добавить другие команды или обработчики по необходимости
 bot.on('message', (msg) => {
-    console.log(`Получено сообщение от ${msg.from.username || msg.from.first_name}: ${msg.text}`);
+  const chatId = msg.chat.id;
+  // Просто для отладки можно отправлять текст обратно
+  // bot.sendMessage(chatId, `Вы написали: ${msg.text}`);
 });
