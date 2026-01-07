@@ -71,12 +71,12 @@ img { max-width:100%; border-radius:8px; margin-top:10px; }
 <script>
   // ===== Firebase config =====
   const firebaseConfig = {
-    apiKey: "ВАШ_API_KEY",
+    apiKey: "AIzaSyBJWrVFGL0lt8zMfQH8rrYMOj8CWFVsUCg",
     authDomain: "kwt-discounts.firebaseapp.com",
     projectId: "kwt-discounts",
-    storageBucket: "kwt-discounts.appspot.com",
-    messagingSenderId: "ВАШ_ID",
-    appId: "ВАШ_APP_ID"
+    storageBucket: "kwt-discounts.firebasestorage.app",
+    messagingSenderId: "980335677636",
+    appId: "1:980335677636:web:a0566f81b81702af60b991"
   };
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
@@ -195,6 +195,7 @@ img { max-width:100%; border-radius:8px; margin-top:10px; }
 
     if(energy>0){
       energy--; localStorage.setItem('energy',energy);
+      updateEnergyBar();
       saveProduct();
     } else {
       showAd(saveProduct);
