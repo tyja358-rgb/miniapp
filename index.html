@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <title>KWT ⚡ Скидки рядом</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -12,58 +11,40 @@
       margin: 0;
       padding: 15px;
     }
-
     h2 {
       text-align: center;
     }
+    .screen { display: none; }
+    .active { display: block; }
 
-    .card {
-      background: #fff;
-      padding: 15px;
+    .big-btn {
+      width: 100%;
+      padding: 25px;
+      margin: 15px 0;
+      font-size: 20px;
       border-radius: 10px;
-      margin-bottom: 15px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+      border: none;
+      cursor: pointer;
+      color: white;
     }
+    .add-btn { background: #4CAF50; }
+    .find-btn { background: #2196F3; }
 
-    input, button {
+    input, button, select {
       width: 100%;
       padding: 10px;
-      margin-top: 8px;
+      margin: 5px 0;
       border-radius: 6px;
       border: 1px solid #ccc;
       font-size: 15px;
     }
+    button { cursor: pointer; }
+    button.secondary { background: #2196F3; color: white; }
 
-    button {
-      background: #4CAF50;
-      color: #fff;
-      border: none;
-      cursor: pointer;
-    }
+    img { max-width: 100%; margin-top: 10px; border-radius: 8px; }
 
-    button.secondary {
-      background: #2196F3;
-    }
-
-    button:disabled {
-      background: #999;
-    }
-
-    img {
-      max-width: 100%;
-      border-radius: 8px;
-      margin-top: 10px;
-    }
-
-    .product {
-      border-bottom: 1px solid #eee;
-      padding: 10px 0;
-    }
-
-    .category {
-      font-weight: bold;
-      color: #4CAF50;
-    }
+    .product { border-bottom: 1px solid #eee; padding: 10px 0; }
+    .category { font-weight: bold; color: #4CAF50; }
 
     .ad-screen {
       position: fixed;
@@ -76,178 +57,165 @@
       flex-direction: column;
       z-index: 999;
     }
-
-    .energy-bar {
-      margin: 10px 0;
-      font-weight: bold;
-    }
   </style>
 </head>
-
 <body>
 
-<h2>⚡ Скидки рядом</h2>
+<h2>⚡ KWT Скидки рядом</h2>
 
-<div class="card">
-  <h3>Энергия: <span id="energyCount">3</span></h3>
-  <button id="earnEnergy">Заработать 1 энергию через рекламу</button>
+<!-- Главное меню -->
+<div id="mainMenu">
+  <button class="big-btn add-btn" onclick="showScreen('addScreen')">➕ Добавить скидку</button>
+  <button class="big-btn find-btn" onclick="showScreen('findScreen')">🔍 Найти скидку</button>
 </div>
 
-<div class="card">
+<!-- Экран добавления скидки -->
+<div id="addScreen" class="screen">
+  <button onclick="showScreen('mainMenu')">⬅ Назад</button>
   <h3>Добавить скидку</h3>
-
   <input type="file" id="photo" accept="image/*" capture="environment">
   <img id="preview" style="display:none;">
-
   <input type="text" id="productName" placeholder="Название товара">
   <input type="number" id="priceBefore" placeholder="Цена до скидки">
-  <input type="number" id="priceAfter" placeholder="Цена после скидки">
+  <input type="number" id="priceAfter" placeholder="Цена со скидкой">
   <input type="text" id="store" placeholder="Магазин">
   <input type="text" id="address" placeholder="Адрес магазина">
-
+  <select id="category">
+    <option value="">Выберите категорию</option>
+    <option value="Авто">Авто</option>
+    <option value="Еда">Еда</option>
+    <option value="Канцелярия">Канцелярия</option>
+    <option value="Вещи">Вещи</option>
+    <option value="Путешествия">Путешествия</option>
+    <option value="Другое">Другое</option>
+  </select>
   <button id="addBtn">Добавить товар</button>
 </div>
 
-<div class="card">
+<!-- Экран поиска скидки -->
+<div id="findScreen" class="screen">
+  <button onclick="showScreen('mainMenu')">⬅ Назад</button>
   <h3>Найденные скидки</h3>
   <div id="list"></div>
 </div>
 
-<!-- ЭКРАН РЕКЛАМЫ -->
+<!-- Экран рекламы -->
 <div class="ad-screen" id="adScreen">
   <h2>📢 Реклама</h2>
   <p>Реклама помогает развивать проект</p>
   <p id="adTimer">5</p>
 </div>
 
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-
 <script>
+  let energy = 2; // Начальная энергия
+  let photoData = null;
+
   const photoInput = document.getElementById('photo');
   const preview = document.getElementById('preview');
   const addBtn = document.getElementById('addBtn');
   const list = document.getElementById('list');
   const adScreen = document.getElementById('adScreen');
   const adTimer = document.getElementById('adTimer');
-  const earnEnergyBtn = document.getElementById('earnEnergy');
-  const energyCountEl = document.getElementById('energyCount');
 
-  let photoData = null;
-  let energy = parseInt(localStorage.getItem('energy')) || 3;
-
-  function updateEnergyDisplay() {
-    energyCountEl.innerText = energy;
-    localStorage.setItem('energy', energy);
+  function showScreen(id){
+    document.querySelectorAll('.screen, #mainMenu').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
   }
 
-  updateEnergyDisplay();
-
+  // Превью фото
   photoInput.addEventListener('change', () => {
     const file = photoInput.files[0];
     if (!file) return;
-
     const reader = new FileReader();
     reader.onload = e => {
       photoData = e.target.result;
-
-      // Снимаем 1 энергию за фото если есть энергия >0
-      if (energy > 0) energy--;
-      updateEnergyDisplay();
-
       preview.src = photoData;
       preview.style.display = 'block';
     };
     reader.readAsDataURL(file);
   });
 
-  function detectCategory(name) {
-    const t = name.toLowerCase();
-    if (t.includes('авто')) return 'Авто';
-    if (t.includes('еда')) return 'Еда';
-    if (t.includes('кафе')) return 'Еда';
-    if (t.includes('билет')) return 'Путешествия';
-    if (t.includes('одеж')) return 'Одежда';
-    return 'Другое';
-  }
-
-  function showAd(callback) {
+  function showAd(callback){
     let time = 5;
     adTimer.innerText = time;
     adScreen.style.display = 'flex';
-
     const interval = setInterval(() => {
       time--;
       adTimer.innerText = time;
-      if (time <= 0) {
+      if(time <= 0){
         clearInterval(interval);
         adScreen.style.display = 'none';
         callback();
       }
-    }, 1000);
+    },1000);
+  }
+
+  function detectCategory(name){
+    const t = name.toLowerCase();
+    if(t.includes('авто')) return 'Авто';
+    if(t.includes('еда') || t.includes('кафе')) return 'Еда';
+    if(t.includes('билет')) return 'Путешествия';
+    if(t.includes('одеж')) return 'Вещи';
+    return 'Другое';
   }
 
   addBtn.addEventListener('click', () => {
     const name = document.getElementById('productName').value.trim();
-    const priceBefore = parseFloat(document.getElementById('priceBefore').value);
-    const priceAfter = parseFloat(document.getElementById('priceAfter').value);
+    const priceBefore = Number(document.getElementById('priceBefore').value);
+    const priceAfter = Number(document.getElementById('priceAfter').value);
     const store = document.getElementById('store').value.trim();
     const address = document.getElementById('address').value.trim();
-
-    if (!photoData || !name || !store || !address || isNaN(priceBefore) || isNaN(priceAfter)) {
-      alert('Заполните все поля корректно!');
+    let category = document.getElementById('category').value;
+    
+    if(!photoData || !name || !store || !address || !priceBefore || !priceAfter || !category){
+      alert('Заполните все поля');
       return;
     }
 
-    const discountPercent = ((priceBefore - priceAfter) / priceBefore) * 100;
-    if (discountPercent < 20) {
-      alert('Скидка должна быть не меньше 20%');
+    const discount = ((priceBefore - priceAfter)/priceBefore)*100;
+    if(discount < 20){
+      alert('Скидка должна быть не менее 20%');
       return;
     }
 
     const addProduct = () => {
-      const category = detectCategory(name);
-
       const div = document.createElement('div');
       div.className = 'product';
       div.innerHTML = `
         <div class="category">${category}</div>
         <strong>${name}</strong><br>
         ${store}, ${address}<br>
-        Цена: ${priceBefore} → ${priceAfter} (${discountPercent.toFixed(0)}%)<br>
+        Цена: ${priceBefore} → ${priceAfter} (${discount.toFixed(1)}%)<br>
         <img src="${photoData}">
       `;
       list.prepend(div);
 
-      // очистка
+      // Очистка
       photoInput.value = '';
       preview.style.display = 'none';
-      photoData = null;
-      document.getElementById('productName').value = '';
-      document.getElementById('priceBefore').value = '';
-      document.getElementById('priceAfter').value = '';
-      document.getElementById('store').value = '';
-      document.getElementById('address').value = '';
+      document.getElementById('productName').value='';
+      document.getElementById('priceBefore').value='';
+      document.getElementById('priceAfter').value='';
+      document.getElementById('store').value='';
+      document.getElementById('address').value='';
+      document.getElementById('category').value='';
 
-      alert('✅ Товар добавлен. Ваша информация бесценна.');
+      alert('✅ Товар добавлен. Спасибо, ваша информация бесценна.');
     };
 
-    // Логика энергии + рекламы
-    if (energy > 0) {
-      energy--;
-      updateEnergyDisplay();
+    // Логика энергии и рекламы
+    if(energy > 1){
+      energy--; // за фото
+      energy--; // за добавление
       addProduct();
+    } else if(energy === 1){
+      energy--; // за фото
+      showAd(addProduct);
     } else {
       showAd(addProduct);
     }
   });
 
-  earnEnergyBtn.addEventListener('click', () => {
-    showAd(() => {
-      energy++;
-      updateEnergyDisplay();
-      alert('✅ Вы заработали 1 энергию!');
-    });
-  });
 </script>
 
 </body>
