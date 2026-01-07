@@ -1,34 +1,37 @@
-
-// Telegram Bot на Node.js для открытия mini app
-
 const TelegramBot = require('node-telegram-bot-api');
 
-// Токен, который дал BotFather
-const TOKEN = "8465624288:AAGKPaKjgGKxOZ3e1xN4pFTI_gTzP3KiVjc";
+// Вставь сюда токен своего бота от BotFather
+const TOKEN = '8465624288:AAGKPaKjgGKxOZ3e1xN4pFTI_gTzP3KiVjc';
 
 // Создаём бота
 const bot = new TelegramBot(TOKEN, { polling: true });
 
-// Ссылка на mini app
-const MINI_APP_URL = "https://tyja358-rgb.github.io/miniapp/";
+// Событие при старте
+bot.onText(/\/start/, (msg) => {
+    const chatId = msg.chat.id;
 
-// Команда /menu
-bot.onText(/\/menu/, (msg) => {
-  const chatId = msg.chat.id;
+    // Настройка кнопки с URL на твой сайт
+    const options = {
+        reply_markup: {
+            inline_keyboard: [
+                [
+                    { text: "Открыть Plasma Tower", url: "https://newpublic.netlify.app" }
+                ]
+            ]
+        }
+    };
 
-  const opts = {
-    reply_markup: {
-      inline_keyboard: [
-        [{ text: "💡 Открыть Plasma Tower", web_app: { url: MINI_APP_URL } }]
-      ]
-    }
-  };
-
-  bot.sendMessage(
-    chatId,
-    "Mini app Plasma Tower для генерации энергии и KWT.\nУлучши башню и выводи KWT прямо через Telegram.",
-    opts
-  );
+    // Сообщение пользователю
+    bot.sendMessage(chatId, "Привет! Нажми кнопку ниже, чтобы сразу начать играть:", options);
 });
 
-console.log("Бот запущен!");
+// Пример обработки других команд (необязательно)
+bot.onText(/\/help/, (msg) => {
+    const chatId = msg.chat.id;
+    bot.sendMessage(chatId, "Это бот для игры Plasma Tower. Просто нажми кнопку и начинай играть!");
+});
+
+// Логирование всех сообщений (для отладки)
+bot.on('message', (msg) => {
+    console.log(`Получено сообщение от ${msg.from.username || msg.from.first_name}: ${msg.text}`);
+});
