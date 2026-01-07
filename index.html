@@ -1,70 +1,3 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-<meta charset="UTF-8">
-<title>KWT ⚡ Скидки рядом</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-body { font-family: Arial, sans-serif; background: #f2f7ff; margin:0; padding:15px; }
-.screen { display:none; }
-.screen.active { display:block; }
-button { width:100%; padding:10px; margin:5px 0; border:none; border-radius:6px; font-size:16px; cursor:pointer; }
-button.primary { background:#4CAF50; color:#fff; }
-button.secondary { background:#2196F3; color:#fff; }
-button.energyBtn { background:#FF9800; color:#fff; }
-.card { background:#fff; padding:15px; border-radius:10px; margin-bottom:15px; box-shadow:0 4px 10px rgba(0,0,0,0.08);}
-img { max-width:100%; border-radius:8px; margin-top:10px; }
-.product { border-bottom:1px solid #eee; padding:10px 0; }
-.category { font-weight:bold; color:#4CAF50; }
-.ad-screen { position:fixed; inset:0; background:#000; color:#fff; display:none; align-items:center; justify-content:center; flex-direction:column; z-index:999; }
-</style>
-</head>
-<body>
-
-<!-- ===== Стартовый экран ===== -->
-<div id="homeScreen" class="screen active">
-  <button id="addDiscountBtn" class="primary">Добавить скидку</button>
-  <button id="findDiscountBtn" class="secondary">Найти скидку</button>
-  <button id="earnEnergyBtn" class="energyBtn">Заработать KWT (энергию)</button>
-  <p>Энергия: <span id="energySpan">0</span>/5</p>
-  <div style="background:#ddd; border-radius:10px; overflow:hidden; height:20px;">
-    <div id="energyBar" style="background:#FF9800; width:0%; height:100%; transition: width 0.3s;"></div>
-  </div>
-</div>
-
-<!-- ===== Добавить скидку ===== -->
-<div id="addScreen" class="screen">
-  <div class="card">
-    <h3>Добавить скидку</h3>
-    <input type="file" id="photo" accept="image/*" capture="environment">
-    <img id="preview" style="display:none;">
-    <input type="text" id="productName" placeholder="Название товара">
-    <input type="number" id="priceBefore" placeholder="Цена до">
-    <input type="number" id="priceAfter" placeholder="Цена со скидкой">
-    <input type="text" id="store" placeholder="Магазин">
-    <input type="text" id="address" placeholder="Адрес магазина">
-    <button id="addBtn" class="primary">Добавить товар</button>
-  </div>
-  <button id="backHome1" class="secondary">Назад</button>
-</div>
-
-<!-- ===== Найти скидку ===== -->
-<div id="findScreen" class="screen">
-  <div class="card">
-    <h3>Найденные скидки</h3>
-    <div id="list"></div>
-  </div>
-  <button id="backHome2" class="secondary">Назад</button>
-</div>
-
-<!-- ===== Экран рекламы ===== -->
-<div class="ad-screen" id="adScreen">
-  <h2>📢 Реклама</h2>
-  <p>Реклама помогает развивать проект</p>
-  <p id="adTimer">5</p>
-</div>
-
-<!-- ===== Firebase SDK ===== -->
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
@@ -183,6 +116,7 @@ img { max-width:100%; border-radius:8px; margin-top:10px; }
       db.collection('products').add({
         name, priceBefore, priceAfter, discount, store, address, category, photo: photoData, timestamp: Date.now()
       }).then(()=>{
+        // Очистка полей
         photoInput.value=''; preview.style.display='none'; photoData=null;
         document.getElementById('productName').value='';
         document.getElementById('priceBefore').value='';
@@ -224,6 +158,3 @@ img { max-width:100%; border-radius:8px; margin-top:10px; }
     });
   });
 </script>
-
-</body>
-</html>
