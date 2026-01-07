@@ -1,40 +1,33 @@
+// bot.js
+// Пример кнопки для Telegram Bot, которая открывает миниап прямо в браузере
+
 const TelegramBot = require('node-telegram-bot-api');
 
-// Вставь сюда токен своего бота
-const token = '8465624288:AAGKPaKjgGKxOZ3e1xN4pFTI_gTzP3KiVjc';
-
-// Запуск бота в режиме polling
+// Вставь сюда свой токен бота
+const token = 'YOUR_BOT_TOKEN_HERE';
 const bot = new TelegramBot(token, { polling: true });
 
-// Обработка команды /start с необязательным параметром
-bot.onText(/\/start(?:\s+(\w+))?/, (msg, match) => {
-  const chatId = msg.chat.id;
-  const param = match[1];
+// Обработка команды /start
+bot.onText(/\/start/, (msg) => {
+    const chatId = msg.chat.id;
 
-  if (param === 'play') {
-    // Если пользователь зашел с /start play — сразу кнопка "Играть"
-    bot.sendMessage(chatId, 'Добро пожаловать в Plasma Tower! 🎮\nНачинай играть по ссылке:', {
-      reply_markup: {
-        inline_keyboard: [
-          [{ text: 'Играть', url: 'https://newpublic.netlify.app' }]
-        ]
-      }
-    });
-  } else {
-    // Обычное приветствие для просто /start
-    bot.sendMessage(chatId, 'Привет! Нажми на кнопку ниже, чтобы открыть Plasma Tower.', {
-      reply_markup: {
-        inline_keyboard: [
-          [{ text: 'Открыть Plasma Tower', url: 'https://tyja358-rgb.github.io/miniapp/' }]
-        ]
-      }
-    });
-  }
+    const opts = {
+        reply_markup: {
+            inline_keyboard: [
+                [
+                    {
+                        text: 'Открыть Плазма Товер',
+                        url: 'https://tyja358-rgb.github.io/miniapp/' // <-- ссылка на GitHub Pages
+                    }
+                ]
+            ]
+        }
+    };
+
+    bot.sendMessage(chatId, 'Добро пожаловать в Plasma Tower! Нажмите кнопку ниже, чтобы открыть игру:', opts);
 });
 
-// Можно добавить другие команды или обработчики по необходимости
-bot.on('message', (msg) => {
-  const chatId = msg.chat.id;
-  // Просто для отладки можно отправлять текст обратно
-  // bot.sendMessage(chatId, `Вы написали: ${msg.text}`);
+// Опционально: обработка других команд
+bot.onText(/\/help/, (msg) => {
+    bot.sendMessage(msg.chat.id, 'Используйте кнопку "Открыть Плазма Товер" чтобы запустить игру.');
 });
