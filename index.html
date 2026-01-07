@@ -80,6 +80,10 @@ img { max-width:100%; border-radius:8px; margin-top:10px; }
     appId: "1:980335677636:web:a0566f81b81702af60b991"
   };
   firebase.initializeApp(firebaseConfig);
+  firebase.auth().signInAnonymously()
+  .catch(error => {
+    console.error("Auth error:", error);
+  });
   const db = firebase.firestore();
 
   // ===== Энергия =====
