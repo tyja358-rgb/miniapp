@@ -1,135 +1,21 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-  <meta charset="UTF-8">
-  <title>KWT ⚡ Скидки рядом</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body { font-family: Arial, sans-serif; background: #f2f7ff; margin:0; padding:15px; }
-    h2 { text-align:center; }
-    .card { background:#fff; padding:15px; border-radius:10px; margin-bottom:15px; box-shadow:0 4px 10px rgba(0,0,0,0.08); }
-    button { width:100%; padding:10px; margin-top:8px; border-radius:6px; border:none; font-size:15px; cursor:pointer; }
-    button.primary { background:#4CAF50; color:#fff; }
-    button.secondary { background:#2196F3; color:#fff; }
-    select, input { width:100%; padding:10px; margin-top:8px; border-radius:6px; border:1px solid #ccc; font-size:15px; }
-    img { max-width:100%; border-radius:8px; margin-top:10px; }
-    .product { border-bottom:1px solid #eee; padding:10px 0; }
-    .category { font-weight:bold; color:#4CAF50; }
-    .ad-screen { position:fixed; inset:0; background:#000; color:#fff; display:none; align-items:center; justify-content:center; flex-direction:column; z-index:999; }
-    #mainMenu { display:flex; flex-direction:column; gap:15px; }
-  </style>
-</head>
-<body>
-
-<h2>⚡ Скидки рядом</h2>
-
-<div id="mainMenu">
-  <button class="primary" id="btnAdd">Добавить скидку</button>
-  <button class="secondary" id="btnFind">Найти скидку</button>
-</div>
-
-<div class="card" id="addSection" style="display:none;">
-  <h3>Добавить скидку</h3>
-  <select id="categorySelect">
-    <option value="">Выберите категорию</option>
-    <option>Еда</option>
-    <option>Одежда</option>
-    <option>Авто</option>
-    <option>Канцелярия</option>
-    <option>Путешествия</option>
-  </select>
-  <select id="subCategorySelect">
-    <option value="">Выберите подкатегорию</option>
-  </select>
-  <input type="file" id="photo" accept="image/*" capture="environment">
-  <img id="preview" style="display:none;">
-  <input type="text" id="productName" placeholder="Название товара">
-  <input type="number" id="priceBefore" placeholder="Цена до скидки">
-  <input type="number" id="priceAfter" placeholder="Цена со скидкой">
-  <input type="text" id="store" placeholder="Магазин">
-  <input type="text" id="address" placeholder="Адрес магазина">
-  <button id="addBtn">Добавить товар</button>
-</div>
-
-<div class="card" id="findSection" style="display:none;">
-  <h3>Найденные скидки</h3>
-  <div id="list"></div>
-</div>
-
-<!-- ЭКРАН РЕКЛАМЫ -->
-<div class="ad-screen" id="adScreen">
-  <h2>📢 Реклама</h2>
-  <p>Реклама помогает развивать проект</p>
-  <p id="adTimer">5</p>
-</div>
-
-<script>
-  const mainMenu = document.getElementById('mainMenu');
-  const addSection = document.getElementById('addSection');
-  const findSection = document.getElementById('findSection');
-  const btnAdd = document.getElementById('btnAdd');
-  const btnFind = document.getElementById('btnFind');
-
-  const categorySelect = document.getElementById('categorySelect');
-  const subCategorySelect = document.getElementById('subCategorySelect');
-
-  const photoInput = document.getElementById('photo');
-  const preview = document.getElementById('preview');
-  const addBtn = document.getElementById('addBtn');
-  const list = document.getElementById('list');
-
-  const adScreen = document.getElementById('adScreen');
-  const adTimer = document.getElementById('adTimer');
-
-  let products = [];
-  let photoData = null;
-  let energy = 2; // стартовая энергия
-
-  let subCategories = {}; // структура категорий и подкатегорий
-
-  // Меню
-  btnAdd.addEventListener('click', () => {
-    mainMenu.style.display = 'none';
-    addSection.style.display = 'block';
-    findSection.style.display = 'none';
-    updateSubCategories();
+earnEnergyBtn.addEventListener('click', () => {
+    // просмотр рекламы даёт 1 энергию
+    showAd(() => {
+      energy++;
+      localStorage.setItem('energy', energy);
+      energySpan.innerText = energy;
+      alert('✅ Вы получили 1 энергию!');
+    });
   });
 
-  btnFind.addEventListener('click', () => {
-    mainMenu.style.display = 'none';
-    addSection.style.display = 'none';
-    findSection.style.display = 'block';
-    renderProducts();
-  });
-
-  // фото
-  photoInput.addEventListener('change', () => {
-    const file = photoInput.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = e => {
-      photoData = e.target.result;
-      preview.src = photoData;
-      preview.style.display = 'block';
-    };
-    reader.readAsDataURL(file);
-  });
-
-  // подкатегории
-  function updateSubCategories() {
-    const cat = categorySelect.value;
-    subCategorySelect.innerHTML = '<option value="">Выберите подкатегорию</option>';
-    if(subCategories[cat]) {
-      subCategories[cat].forEach(sc => {
-        const opt = document.createElement('option');
-        opt.value = sc;
-        opt.textContent = sc;
-        subCategorySelect.appendChild(opt);
-      });
-    }
+  function detectCategory(name) {
+    const t = name.toLowerCase();
+    if (t.includes('авто')) return 'Авто';
+    if (t.includes('еда')  t.includes('кафе')  t.includes('ресторан')) return 'Еда';
+    if (t.includes('билет')) return 'Путешествия';
+    if (t.includes('одеж')) return 'Одежда';
+    return 'Другое';
   }
-
-  categorySelect.addEventListener('change', updateSubCategories);
 
   function showAd(callback) {
     let time = 5;
@@ -147,72 +33,68 @@
   }
 
   addBtn.addEventListener('click', () => {
-    const cat = categorySelect.value;
-    const subCat = subCategorySelect.value || "Другое";
     const name = document.getElementById('productName').value.trim();
+    const priceBefore = parseFloat(document.getElementById('priceBefore').value);
+    const priceAfter = parseFloat(document.getElementById('priceAfter').value);
     const store = document.getElementById('store').value.trim();
     const address = document.getElementById('address').value.trim();
-    const priceBefore = Number(document.getElementById('priceBefore').value);
-    const priceAfter = Number(document.getElementById('priceAfter').value);
 
-    if(!cat || !name || !store || !address || !photoData || !priceBefore || !priceAfter || priceAfter>=priceBefore) {
-      alert('Заполните все поля корректно, цена со скидкой меньше цены до скидки');
+    if (!photoData  !name  !store  !address  isNaN(priceBefore) || isNaN(priceAfter)) {
+      alert('Заполните все поля корректно!');
       return;
     }
 
-    function addProduct() {
-      // добавить в подкатегории
-      if(!subCategories[cat]) subCategories[cat] = [];
-      if(subCategories[cat].indexOf(subCat)===-1) subCategories[cat].push(subCat);
-
-      const div = document.createElement('div');
-      div.className='product';
-      div.innerHTML = `
-        <div class="category">${cat} / ${subCat}</div>
-        <strong>${name}</strong><br>
-        ${store}, ${address}<br>
-        Цена: ${priceBefore} → ${priceAfter}<br>
-        <img src="${photoData}">
-      `;
-      list.prepend(div);
-
-      products.push({cat, subCat, name, store, address, priceBefore, priceAfter, photo: photoData});
-
-      // очистка
-      photoInput.value=''; preview.style.display='none'; photoData=null;
-      document.getElementById('productName').value='';
-      document.getElementById('priceBefore').value='';
-      document.getElementById('priceAfter').value='';
-      document.getElementById('store').value='';
-      document.getElementById('address').value='';
-      updateSubCategories();
-
-      alert('✅ Товар добавлен. Спасибо, ваша информация бесценна.');
+    const discount = ((priceBefore - priceAfter)/priceBefore * 100).toFixed(0);
+    if (discount < 20) {
+      alert('Скидка должна быть не меньше 20%');
+      return;
     }
 
-    if(energy>1){
+    function saveProduct() {
+      const category = detectCategory(name);
+      db.collection('products').add({name, priceBefore, priceAfter, discount, store, address, category, photo: photoData, timestamp: Date.now()})
+        .then(() => {
+          alert('✅ Товар добавлен! Ваша информация бесценна.');
+          photoInput.value = '';
+          preview.style.display = 'none';
+          document.getElementById('productName').value = '';
+          document.getElementById('priceBefore').value = '';
+          document.getElementById('priceAfter').value = '';
+          document.getElementById('store').value = '';
+          document.getElementById('address').value = '';
+          photoData = null;
+        });
+    }
+
+    if (energy > 0) {
+      // снимаем 1 энергию, добавляем без рекламы
       energy--;
-      addProduct();
+      localStorage.setItem('energy', energy);
+      energySpan.innerText = energy;
+      saveProduct();
     } else {
-      showAd(addProduct);
+      // показываем рекламу
+      showAd(saveProduct);
     }
   });
 
-  function renderProducts() {
-    list.innerHTML='';
-    products.forEach(p=>{
+  // отображение товаров
+  db.collection('products').orderBy('timestamp', 'desc').onSnapshot(snapshot => {
+    list.innerHTML = '';
+    snapshot.forEach(doc => {
+      const data = doc.data();
       const div = document.createElement('div');
-      div.className='product';
-      div.innerHTML = `
-        <div class="category">${p.cat} / ${p.subCat}</div>
-        <strong>${p.name}</strong><br>
-        ${p.store}, ${p.address}<br>
-        Цена: ${p.priceBefore} → ${p.priceAfter}<br>
-        <img src="${p.photo}">
-      `;
+      div.className = 'product';
+      div.innerHTML = 
+        <div class="category">${data.category}</div>
+        <strong>${data.name}</strong><br>
+        ${data.store}, ${data.address}<br>
+        Цена: ${data.priceBefore} → ${data.priceAfter} (${data.discount}%)<br>
+        <img src="${data.photo}">
+      ;
       list.appendChild(div);
     });
-  }
+  });
 
 </script>
 </body>
