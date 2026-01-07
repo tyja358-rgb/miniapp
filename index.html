@@ -53,11 +53,10 @@ img { max-width:100%; border-radius:8px; margin-top:10px; }
   </div>
 </div>
 
-<!-- ===== Экран поиска/просмотра скидок с фильтрами ===== -->
+<!-- ===== Экран поиска/просмотра скидок ===== -->
 <div id="findScreen" class="screen">
   <div class="card">
     <h3>Найденные скидки</h3>
-
     <select id="filterCategory">
       <option value="">Все категории</option>
       <option value="Авто">Авто</option>
@@ -66,16 +65,13 @@ img { max-width:100%; border-radius:8px; margin-top:10px; }
       <option value="Путешествия">Путешествия</option>
       <option value="Другое">Другое</option>
     </select>
-
     <select id="filterDiscount">
       <option value="0">Все скидки</option>
       <option value="20">≥ 20%</option>
       <option value="30">≥ 30%</option>
       <option value="50">≥ 50%</option>
     </select>
-
     <input type="text" id="filterStore" placeholder="Поиск по магазину">
-
     <div id="list"></div>
     <button id="backHome1" class="secondary">Назад</button>
   </div>
@@ -162,7 +158,7 @@ img { max-width:100%; border-radius:8px; margin-top:10px; }
       photoData = e.target.result;
       preview.src = photoData;
       preview.style.display = 'block';
-      if (energy > 0) {
+      if (energy > 0) { // снимаем за фото
         energy--;
         localStorage.setItem('energy', energy);
         energySpan.innerText = energy;
@@ -271,7 +267,6 @@ img { max-width:100%; border-radius:8px; margin-top:10px; }
   db.collection('products').orderBy('timestamp','desc')
     .onSnapshot(snapshot => renderProducts(snapshot));
 
-  // ===== Обновление фильтров в реальном времени =====
   filterCategory.addEventListener('change', () => db.collection('products').orderBy('timestamp','desc').get().then(renderProducts));
   filterDiscount.addEventListener('change', () => db.collection('products').orderBy('timestamp','desc').get().then(renderProducts));
   filterStore.addEventListener('input', () => db.collection('products').orderBy('timestamp','desc').get().then(renderProducts));
