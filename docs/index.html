@@ -1,75 +1,38 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MiniApp Discounts</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin:0; padding:0; background:#f0f0f0; }
-    .screen { display:none; padding:20px; }
-    .screen.active { display:block; }
-    #energyBar { height:10px; background:green; width:0; transition:width 0.2s; }
-    #adScreen { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); color:white; justify-content:center; align-items:center; font-size:2em; flex-direction:column; }
-    .product { background:white; margin:10px 0; padding:10px; border-radius:8px; box-shadow:0 0 5px #ccc; }
-    img { max-width:100%; height:auto; border-radius:5px; margin-top:5px; }
-    button { padding:10px 15px; margin:5px 0; cursor:pointer; }
-  </style>
-</head>
-<body>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
 
-  <div id="homeScreen" class="screen active">
-    <h1>MiniApp Discounts</h1>
-    <p>Энергия: <span id="energySpan">0</span></p>
-    <div id="energyBar"></div>
-    <button id="addDiscountBtn">Добавить скидку</button>
-    <button id="findDiscountBtn">Просмотреть скидки</button>
-  </div>
+<script>
+  // ===== Firebase config =====
+  const firebaseConfig = {
+    apiKey: "AIzaSyBJWrVFGL0lt8zMfQH8rrYMOj8CWFVsUCg",
+    authDomain: "kwt-discounts.firebaseapp.com",
+    projectId: "kwt-discounts",
+    storageBucket: "kwt-discounts.firebasestorage.app",
+    messagingSenderId: "980335677636",
+    appId: "1:980335677636:web:a0566f81b81702af60b991"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
 
-  <div id="addScreen" class="screen">
-    <h2>Добавить товар</h2>
-    <input id="productName" placeholder="Название"><br>
-    <input id="priceBefore" placeholder="Цена до скидки"><br>
-    <input id="priceAfter" placeholder="Цена после скидки"><br>
-    <input id="store" placeholder="Магазин"><br>
-    <input id="address" placeholder="Адрес"><br>
-    <input type="file" id="photo"><br>
-    <img id="preview" style="display:none"><br>
-    <button id="addBtn">Добавить</button>
-    <button id="backHome1">Назад</button>
-  </div>
+  // ===== Анонимная авторизация =====
+  firebase.auth().signInAnonymously()
+    .then(() => { console.log("Signed in anonymously"); })
+    .catch(err => { console.error("Auth error:", err.code, err.message); });
 
-  <div id="findScreen" class="screen">
-    <h2>Список товаров</h2>
-    <div id="list"></div>
-    <button id="backHome2">Назад</button>
-  </div>
+  // ===== Переносим основной код внутрь, когда пользователь готов =====
+  firebase.auth().onAuthStateChanged(user => {
+    if (user) {
+      console.log("User ready:", user.uid);
+      initApp();
+    } else {
+      console.log("User signed out");
+    }
+  });
 
-  <div id="adScreen" style="display:flex;">
-    Подождите <span id="adTimer">5</span> сек...
-  </div>
-
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-
-  <script>
-    // ===== Firebase config =====
-    const firebaseConfig = {
-      apiKey: "AIzaSyBJWrVFGL0lt8zMfQH8rrYMOj8CWFVsUCg",
-      authDomain: "kwt-discounts.firebaseapp.com",
-      projectId: "kwt-discounts",
-      storageBucket: "kwt-discounts.firebasestorage.app",
-      messagingSenderId: "980335677636",
-      appId: "1:980335677636:web:a0566f81b81702af60b991"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-
-    // ===== Анонимная авторизация =====
-    firebase.auth().signInAnonymously()
-      .then(() => { console.log("Signed in anonymously"); })
-      .catch(err => { console.error("Auth error:", err.code, err.message); });
-
+  // ===== Основная функция приложения =====
+  function initApp() {
     // ===== Энергия =====
     const maxEnergy = 5;
     let energy = Number(localStorage.getItem('energy')) || 0;
@@ -83,7 +46,7 @@
     }
     updateEnergyBar();
 
-    // ===== Экраны =====
+    // ===== Экраны и элементы =====
     const homeScreen = document.getElementById('homeScreen');
     const addScreen = document.getElementById('addScreen');
     const findScreen = document.getElementById('findScreen');
@@ -130,9 +93,23 @@
       const interval = setInterval(()=>{
         time--;
         adTimer.innerText = time;
-        if(time<=0){clearInterval(interval); adScreen.style.display='none'; callback();}
+        if(time<=0){
+          clearInterval(interval);
+          adScreen.style.display='none';
+          callback();
+        }
       },1000);
     }
+
+    // ===== Заработать энергию =====
+    document.getElementById('earnEnergyBtn').addEventListener('click', ()=>{
+      showAd(()=>{
+        if(energy<maxEnergy) energy++;
+        localStorage.setItem('energy',energy);
+        updateEnergyBar();
+        alert('✅ Вы получили 1 энергию!');
+      });
+    });
 
     // ===== Добавить товар =====
     const addBtn = document.getElementById('addBtn');
@@ -156,6 +133,7 @@
         db.collection('products').add({
           name, priceBefore, priceAfter, discount, store, address, category, photo: photoData, timestamp: Date.now()
         }).then(()=>{
+          // Очистка полей
           photoInput.value=''; preview.style.display='none'; photoData=null;
           document.getElementById('productName').value='';
           document.getElementById('priceBefore').value='';
@@ -196,7 +174,5 @@
         list.appendChild(div);
       });
     });
-  </script>
-
-</body>
-</html>
+  }
+</script>
