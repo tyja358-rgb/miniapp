@@ -66,11 +66,10 @@ img { max-width:100%; border-radius:8px; margin-top:10px; }
 
 <!-- ===== Firebase SDK ===== -->
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
 
 <script>
-  // ===== Firebase config =====
+  // ===== Конфиг Firebase =====
   const firebaseConfig = {
     apiKey: "AIzaSyBJWrVFGL0lt8zMfQH8rrYMOj8CWFVsUCg",
     authDomain: "kwt-discounts.firebaseapp.com",
@@ -80,16 +79,12 @@ img { max-width:100%; border-radius:8px; margin-top:10px; }
     appId: "1:980335677636:web:a0566f81b81702af60b991"
   };
   firebase.initializeApp(firebaseConfig);
-  firebase.auth().signInAnonymously()
-  .catch(error => {
-    console.error("Auth error:", error);
-  });
   const db = firebase.firestore();
 
   // ===== Энергия =====
   const maxEnergy = 5;
   let energy = Number(localStorage.getItem('energy')) || 0;
-  energy = Math.min(energy,maxEnergy);
+  energy = Math.min(energy, maxEnergy);
   const energySpan = document.getElementById('energySpan');
   const energyBar = document.getElementById('energyBar');
   function updateEnergyBar() {
@@ -160,9 +155,9 @@ img { max-width:100%; border-radius:8px; margin-top:10px; }
     });
   });
 
-  // ===== Добавить товар =====
+  // ===== Добавление товара =====
   const addBtn = document.getElementById('addBtn');
-  addBtn.addEventListener('click',()=>{
+  addBtn.addEventListener('click', ()=>{
     const name = document.getElementById('productName').value.trim();
     const priceBefore = parseFloat(document.getElementById('priceBefore').value);
     const priceAfter = parseFloat(document.getElementById('priceAfter').value);
@@ -175,14 +170,17 @@ img { max-width:100%; border-radius:8px; margin-top:10px; }
     }
 
     const discount = ((priceBefore-priceAfter)/priceBefore*100).toFixed(0);
-    if(discount<20){alert('Скидка должна быть не меньше 20%'); return;}
+    if(discount < 20){
+      alert('Скидка должна быть не меньше 20%');
+      return;
+    }
 
     function saveProduct(){
       const category = detectCategory(name);
       db.collection('products').add({
         name, priceBefore, priceAfter, discount, store, address, category, photo: photoData, timestamp: Date.now()
       }).then(()=>{
-        // очищаем поля
+        // Очистка полей
         photoInput.value=''; preview.style.display='none'; photoData=null;
         document.getElementById('productName').value='';
         document.getElementById('priceBefore').value='';
@@ -191,11 +189,12 @@ img { max-width:100%; border-radius:8px; margin-top:10px; }
         document.getElementById('address').value='';
         updateEnergyBar();
 
-        // через 100мс переходим на стартовый экран
         setTimeout(()=>{ addScreen.classList.remove('active'); homeScreen.classList.add('active'); }, 100);
-
         alert('✅ Товар добавлен! Ваша информация бесценна.');
-      }).catch(err=>{ console.error(err); alert('Ошибка при добавлении товара'); });
+      }).catch(err=>{
+        console.error(err);
+        alert('Ошибка при добавлении товара: ' + err.message);
+      });
     }
 
     if(energy>0){
@@ -215,7 +214,11 @@ img { max-width:100%; border-radius:8px; margin-top:10px; }
       const data = doc.data();
       const div = document.createElement('div');
       div.className='product';
-      div.innerHTML = `<div class="category">${data.category}</div><strong>${data.name}</strong><br>${data.store}, ${data.address}<br>Цена: ${data.priceBefore} → ${data.priceAfter} (${data.discount}%)<br><img src="${data.photo}">`;
+      div.innerHTML = `<div class="category">${data.category}</div>
+      <strong>${data.name}</strong><br>
+      ${data.store}, ${data.address}<br>
+      Цена: ${data.priceBefore} → ${data.priceAfter} (${data.discount}%)<br>
+      <img src="${data.photo}">`;
       list.appendChild(div);
     });
   });
