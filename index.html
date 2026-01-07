@@ -1,101 +1,100 @@
 earnEnergyBtn.addEventListener('click', () => {
-    // просмотр рекламы даёт 1 энергию
-    showAd(() => {
-      energy++;
-      localStorage.setItem('energy', energy);
-      energySpan.innerText = energy;
-      alert('✅ Вы получили 1 энергию!');
-    });
+  // просмотр рекламы даёт 1 энергию
+  showAd(() => {
+    energy++;
+    localStorage.setItem('energy', energy);
+    energySpan.innerText = energy;
+    alert('✅ Вы получили 1 энергию!');
   });
+});
 
-  function detectCategory(name) {
-    const t = name.toLowerCase();
-    if (t.includes('авто')) return 'Авто';
-    if (t.includes('еда')  t.includes('кафе')  t.includes('ресторан')) return 'Еда';
-    if (t.includes('билет')) return 'Путешествия';
-    if (t.includes('одеж')) return 'Одежда';
-    return 'Другое';
-  }
+function detectCategory(name) {
+  const t = name.toLowerCase();
+  if (t.includes('авто')) return 'Авто';
+  if (t.includes('еда') || t.includes('кафе') || t.includes('ресторан')) return 'Еда';
+  if (t.includes('билет')) return 'Путешествия';
+  if (t.includes('одеж')) return 'Одежда';
+  return 'Другое';
+}
 
-  function showAd(callback) {
-    let time = 5;
+function showAd(callback) {
+  let time = 5;
+  adTimer.innerText = time;
+  adScreen.style.display = 'flex';
+
+  const interval = setInterval(() => {
+    time--;
     adTimer.innerText = time;
-    adScreen.style.display = 'flex';
-    const interval = setInterval(() => {
-      time--;
-      adTimer.innerText = time;
-      if (time <= 0) {
-        clearInterval(interval);
-        adScreen.style.display = 'none';
-        callback();
-      }
-    }, 1000);
+    if (time <= 0) {
+      clearInterval(interval);
+      adScreen.style.display = 'none';
+      callback();
+    }
+  }, 1000);
+}
+
+addBtn.addEventListener('click', () => {
+  const name = document.getElementById('productName').value.trim();
+  const priceBefore = parseFloat(document.getElementById('priceBefore').value);
+  const priceAfter = parseFloat(document.getElementById('priceAfter').value);
+  const store = document.getElementById('store').value.trim();
+  const address = document.getElementById('address').value.trim();
+
+  if (!photoData || !name || !store || !address || isNaN(priceBefore) || isNaN(priceAfter)) {
+    alert('Заполните все поля корректно!');
+    return;
   }
 
-  addBtn.addEventListener('click', () => {
-    const name = document.getElementById('productName').value.trim();
-    const priceBefore = parseFloat(document.getElementById('priceBefore').value);
-    const priceAfter = parseFloat(document.getElementById('priceAfter').value);
-    const store = document.getElementById('store').value.trim();
-    const address = document.getElementById('address').value.trim();
+  const discount = ((priceBefore - priceAfter)/priceBefore * 100).toFixed(0);
+  if (discount < 20) {
+    alert('Скидка должна быть не меньше 20%');
+    return;
+  }
 
-    if (!photoData  !name  !store  !address  isNaN(priceBefore) || isNaN(priceAfter)) {
-      alert('Заполните все поля корректно!');
-      return;
-    }
-
-    const discount = ((priceBefore - priceAfter)/priceBefore * 100).toFixed(0);
-    if (discount < 20) {
-      alert('Скидка должна быть не меньше 20%');
-      return;
-    }
-
-    function saveProduct() {
-      const category = detectCategory(name);
-      db.collection('products').add({name, priceBefore, priceAfter, discount, store, address, category, photo: photoData, timestamp: Date.now()})
-        .then(() => {
-          alert('✅ Товар добавлен! Ваша информация бесценна.');
-          photoInput.value = '';
-          preview.style.display = 'none';
-          document.getElementById('productName').value = '';
-          document.getElementById('priceBefore').value = '';
-          document.getElementById('priceAfter').value = '';
-          document.getElementById('store').value = '';
-          document.getElementById('address').value = '';
-          photoData = null;
-        });
-    }
-
-    if (energy > 0) {
-      // снимаем 1 энергию, добавляем без рекламы
-      energy--;
-      localStorage.setItem('energy', energy);
-      energySpan.innerText = energy;
-      saveProduct();
-    } else {
-      // показываем рекламу
-      showAd(saveProduct);
-    }
-  });
-
-  // отображение товаров
-  db.collection('products').orderBy('timestamp', 'desc').onSnapshot(snapshot => {
-    list.innerHTML = '';
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      const div = document.createElement('div');
-      div.className = 'product';
-      div.innerHTML = 
-        <div class="category">${data.category}</div>
-        <strong>${data.name}</strong><br>
-        ${data.store}, ${data.address}<br>
-        Цена: ${data.priceBefore} → ${data.priceAfter} (${data.discount}%)<br>
-        <img src="${data.photo}">
-      ;
-      list.appendChild(div);
+  function saveProduct() {
+    const category = detectCategory(name);
+    db.collection('products').add({
+      name, priceBefore, priceAfter, discount, store, address, category,
+      photo: photoData, timestamp: Date.now()
+    }).then(() => {
+      alert('✅ Товар добавлен! Ваша информация бесценна.');
+      photoInput.value = '';
+      preview.style.display = 'none';
+      document.getElementById('productName').value = '';
+      document.getElementById('priceBefore').value = '';
+      document.getElementById('priceAfter').value = '';
+      document.getElementById('store').value = '';
+      document.getElementById('address').value = '';
+      photoData = null;
     });
-  });
+  }
 
-</script>
-</body>
-</html>
+  if (energy > 0) {
+    // снимаем 1 энергию, добавляем без рекламы
+    energy--;
+    localStorage.setItem('energy', energy);
+    energySpan.innerText = energy;
+    saveProduct();
+  } else {
+    // показываем рекламу
+    showAd(saveProduct);
+  }
+});
+
+// отображение товаров
+db.collection('products').orderBy('timestamp', 'desc').onSnapshot(snapshot => {
+  list.innerHTML = '';
+  snapshot.forEach(doc => {
+    const data = doc.data();
+    const div = document.createElement('div');
+    div.className = 'product';
+    div.innerHTML = `
+      <div class="category">${data.category}</div>
+      <strong>${data.name}</strong><br>
+      ${data.store}, ${data.address}<br>
+      Цена: ${data.priceBefore} → ${data.priceAfter} (${data.discount}%)
+      <br><img src="${data.photo}">
+    `;
+    list.appendChild(div);
+  });
+});
