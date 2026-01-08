@@ -93,7 +93,7 @@
     margin-bottom: 15px;
   }
 
-  .shop-btn, .address-btn, .add-btn {
+  .category-btn {
     width: 100%;
     padding: 12px 0;
     margin: 5px 0;
@@ -106,13 +106,18 @@
     transition: 0.2s;
   }
 
-  .shop-btn:hover, .address-btn:hover, .add-btn:hover {
+  .category-btn:hover {
     background: #4b0082;
   }
 
   .close-btn {
     background: #ff4444;
     margin-top: 10px;
+  }
+
+  .address-container button {
+    margin-left: 5px;
+    width: 100px;
   }
 
 </style>
@@ -131,25 +136,13 @@
 </div>
 
 <!-- Модальное окно магазинов -->
-<div class="modal" id="shopModal">
+<div class="modal" id="storeModal">
   <div class="modal-content">
     <h2>Магазины</h2>
-    <div id="shopList"></div>
-    <input type="text" id="newShopInput" placeholder="Название магазина" style="width:100%; padding:8px; border-radius:8px; margin-top:10px;">
-    <button class="add-btn" id="addShopBtn">Добавить магазин</button>
-    <button class="close-btn" id="closeShopModal">Закрыть</button>
-  </div>
-</div>
-
-<!-- Модальное окно адресов -->
-<div class="modal" id="addressModal">
-  <div class="modal-content">
-    <h2>Адреса магазина</h2>
-    <div id="addressList"></div>
-    <input type="text" id="newAddressInput" placeholder="Новый адрес" style="width:100%; padding:8px; border-radius:8px; margin-top:10px;">
-    <button class="add-btn" id="addAddressBtn">Добавить адрес вручную</button>
-    <button class="add-btn" id="geoAddressBtn">Добавить адрес по геолокации</button>
-    <button class="close-btn" id="closeAddressModal">Закрыть</button>
+    <input type="text" id="newStoreInput" placeholder="Введите название магазина" style="width:100%; padding:8px; margin-bottom:10px; border-radius:8px; border:none;">
+    <button id="addStoreBtn" class="category-btn">Добавить магазин</button>
+    <div id="storeList"></div>
+    <button class="category-btn close-btn" id="closeModal">Закрыть</button>
   </div>
 </div>
 
@@ -166,6 +159,7 @@
     energyBar.style.width = percent + '%';
     energyText.innerText = `${energy} / ${maxEnergy}`;
   }
+
   updateEnergyBar();
 
   document.getElementById('earnEnergyBtn').onclick = () => {
@@ -176,96 +170,120 @@
   };
 
   // ===== Магазины =====
-  const shopModal = document.getElementById('shopModal');
-  const shopList = document.getElementById('shopList');
-  const closeShopModal = document.getElementById('closeShopModal');
-  const newShopInput = document.getElementById('newShopInput');
-  const addShopBtn = document.getElementById('addShopBtn');
+  const storeModal = document.getElementById('storeModal');
+  const storeList = document.getElementById('storeList');
+  const closeModal = document.getElementById('closeModal');
+  const newStoreInput = document.getElementById('newStoreInput');
+  const addStoreBtn = document.getElementById('addStoreBtn');
 
-  const addressModal = document.getElementById('addressModal');
-  const addressList = document.getElementById('addressList');
-  const newAddressInput = document.getElementById('newAddressInput');
-  const addAddressBtn = document.getElementById('addAddressBtn');
-  const geoAddressBtn = document.getElementById('geoAddressBtn');
-  const closeAddressModal = document.getElementById('closeAddressModal');
+  let stores = JSON.parse(localStorage.getItem('stores')) || [];
+  let currentStoreIndex = null;
 
-  let shops = JSON.parse(localStorage.getItem('shops')) || [];
-  let currentShopIndex = null;
-
-  function saveShops() {
-    localStorage.setItem('shops', JSON.stringify(shops));
+  function saveStores() {
+    localStorage.setItem('stores', JSON.stringify(stores));
   }
 
-  function renderShops() {
-    shopList.innerHTML = '';
-    shops.sort((a,b)=>a.name.localeCompare(b.name));
-    shops.forEach((shop, index) => {
-      const btn = document.createElement('button');
-      btn.innerText = shop.name;
-      btn.className = 'shop-btn';
-      btn.onclick = () => openAddresses(index);
-      shopList.appendChild(btn);
+  function renderStores() {
+    storeList.innerHTML = '';
+    stores.sort((a,b) => a.name.localeCompare(b.name));
+    stores.forEach((store, idx) => {
+      const div = document.createElement('div');
+      div.style.border = "1px solid #555";
+      div.style.padding = "8px";
+      div.style.borderRadius = "10px";
+      div.style.margin = "5px 0";
+      div.style.background = "#2a2a2a";
+
+      const nameBtn = document.createElement('button');
+      nameBtn.className = 'category-btn';
+      nameBtn.style.width = '100%';
+      nameBtn.innerText = store.name;
+      nameBtn.onclick = () => openStoreAddresses(idx);
+
+      div.appendChild(nameBtn);
+      storeList.appendChild(div);
     });
   }
 
-  function renderAddresses() {
-    addressList.innerHTML = '';
-    if(currentShopIndex === null) return;
-    const addresses = shops[currentShopIndex].addresses || [];
-    addresses.forEach((addr, idx) => {
-      const btn = document.createElement('button');
-      btn.innerText = addr.text;
-      btn.className = 'address-btn';
-      addressList.appendChild(btn);
-    });
+  function openStoreAddresses(index) {
+    currentStoreIndex = index;
+    const store = stores[index];
+
+    // Очистить содержимое и показать адреса
+    storeList.innerHTML = '';
+    const addrHeader = document.createElement('h3');
+    addrHeader.innerText = `Адреса ${store.name}`;
+    storeList.appendChild(addrHeader);
+
+    const addressList = document.createElement('div');
+    addressList.id = 'addressList';
+    storeList.appendChild(addressList);
+
+    const geoBtn = document.createElement('button');
+    geoBtn.innerText = "Добавить адрес по геолокации";
+    geoBtn.className = 'category-btn';
+    geoBtn.onclick = () => {
+      if(!navigator.geolocation) { alert("Геолокация не поддерживается"); return; }
+      navigator.geolocation.getCurrentPosition(pos => {
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
+        const addrObj = {lat, lon, text:`Lat: ${lat.toFixed(5)}, Lon: ${lon.toFixed(5)}`, confirmed:false};
+        if(!store.addresses) store.addresses = [];
+        store.addresses.push(addrObj);
+        saveStores();
+        renderAddresses();
+      }, err => alert("Ошибка получения геолокации: "+err.message), {enableHighAccuracy:true, timeout:10000});
+    };
+    storeList.appendChild(geoBtn);
+
+    function renderAddresses() {
+      addressList.innerHTML = '';
+      if(!store.addresses) return;
+      store.addresses.forEach((addr, idx) => {
+        const div = document.createElement('div');
+        div.style.display = 'flex';
+        div.style.justifyContent = 'space-between';
+        div.style.margin = '5px 0';
+        const span = document.createElement('span');
+        span.innerText = addr.text;
+        const confirmBtn = document.createElement('button');
+        confirmBtn.innerText = addr.confirmed ? "Подтверждено" : "Подтвердить";
+        confirmBtn.className = 'category-btn';
+        confirmBtn.disabled = !!addr.confirmed;
+        confirmBtn.onclick = () => {
+          addr.confirmed = true;
+          saveStores();
+          renderAddresses();
+          alert('Адрес подтвержден ✅');
+        };
+        div.appendChild(span);
+        div.appendChild(confirmBtn);
+        addressList.appendChild(div);
+      });
+    }
+
+    renderAddresses();
   }
 
-  function openAddresses(index) {
-    currentShopIndex = index;
-    renderAddresses();
-    addressModal.style.display = 'flex';
-  }
-
-  addShopBtn.onclick = () => {
-    const name = newShopInput.value.trim();
-    if(!name) return;
-    shops.push({name, addresses: []});
-    newShopInput.value = '';
-    saveShops();
-    renderShops();
+  addStoreBtn.onclick = () => {
+    const name = newStoreInput.value.trim();
+    if(!name) return alert("Введите название магазина!");
+    if(!stores.some(s=>s.name.toLowerCase()===name.toLowerCase())) {
+      stores.push({name, addresses:[]});
+      saveStores();
+      newStoreInput.value = '';
+      renderStores();
+    } else {
+      alert("Такой магазин уже существует!");
+    }
   };
 
-  addAddressBtn.onclick = () => {
-    if(currentShopIndex === null) return;
-    const text = newAddressInput.value.trim();
-    if(!text) return;
-    if(!shops[currentShopIndex].addresses) shops[currentShopIndex].addresses = [];
-    shops[currentShopIndex].addresses.push({text});
-    newAddressInput.value = '';
-    saveShops();
-    renderAddresses();
-  };
+  document.getElementById('addDiscountBtn').onclick = () => storeModal.style.display = 'flex';
+  document.getElementById('findDiscountBtn').onclick = () => storeModal.style.display = 'flex';
+  closeModal.onclick = () => storeModal.style.display = 'none';
 
-  geoAddressBtn.onclick = () => {
-    if(currentShopIndex === null) return;
-    if(!navigator.geolocation) { alert("Геолокация не поддерживается"); return; }
-    navigator.geolocation.getCurrentPosition(pos => {
-      const text = `Lat:${pos.coords.latitude.toFixed(5)}, Lon:${pos.coords.longitude.toFixed(5)}`;
-      if(!shops[currentShopIndex].addresses) shops[currentShopIndex].addresses = [];
-      shops[currentShopIndex].addresses.push({text, lat: pos.coords.latitude, lon: pos.coords.longitude});
-      saveShops();
-      renderAddresses();
-    }, err => alert("Ошибка получения геолокации: "+err.message));
-  };
-
-  closeShopModal.onclick = () => shopModal.style.display = 'none';
-  closeAddressModal.onclick = () => addressModal.style.display = 'none';
-
-  document.getElementById('addDiscountBtn').onclick = () => shopModal.style.display = 'flex';
-  document.getElementById('findDiscountBtn').onclick = () => shopModal.style.display = 'flex';
-
-  renderShops();
-
+  renderStores();
 </script>
+
 </body>
 </html>
