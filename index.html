@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MiniApp - Скидки</title>
 <style>
-  /* ===== Общий фон ===== */
   body, html {
     margin: 0;
     padding: 0;
@@ -19,7 +18,6 @@
     color: #fff;
   }
 
-  /* ===== Главные экраны ===== */
   .screen {
     position: absolute;
     width: 100%;
@@ -38,7 +36,6 @@
     pointer-events: all;
   }
 
-  /* ===== Кнопки ===== */
   button {
     background: #222;
     color: #fff;
@@ -57,7 +54,6 @@
     box-shadow: 0 0 40px rgba(255,255,255,0.6);
   }
 
-  /* ===== Шкала энергии ===== */
   .energy-bar-container {
     width: 80%;
     height: 20px;
@@ -78,8 +74,7 @@
     font-weight: bold;
   }
 
-  /* ===== Экран добавления ===== */
-  .add-form {
+  .add-form, .find-form {
     display: flex;
     flex-direction: column;
     gap: 15px;
@@ -105,6 +100,26 @@
     width: 100px;
     height: 40px;
     font-size: 1rem;
+  }
+
+  #product-list {
+    width: 90%;
+    max-width: 600px;
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow-y: auto;
+    max-height: 50%;
+  }
+  .product {
+    background: rgba(0,0,0,0.4);
+    padding: 10px;
+    border-radius: 8px;
+  }
+  .product img {
+    max-width: 100%;
+    border-radius: 5px;
   }
 </style>
 </head>
@@ -144,119 +159,160 @@
   <button class="back-btn" id="backHome1">Назад</button>
 </div>
 
+<!-- ===== Экран поиска ===== -->
+<div id="findScreen" class="screen">
+  <div class="find-form">
+    <select id="filterCategory">
+      <option value="">Все категории</option>
+      <option value="Авто">Авто</option>
+      <option value="Еда">Еда</option>
+      <option value="Путешествия">Путешествия</option>
+      <option value="Одежда">Одежда</option>
+      <option value="Другое">Другое</option>
+    </select>
+    <div id="product-list"></div>
+    <button class="back-btn" id="backHome2">Назад</button>
+  </div>
+</div>
+
 <!-- ===== Firebase ===== -->
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
 <script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyBJWrVFGL0lt8zMfQH8rrYMOj8CWFVsUCg",
-    authDomain: "kwt-discounts.firebaseapp.com",
-    projectId: "kwt-discounts",
-    storageBucket: "kwt-discounts.firebasestorage.app",
-    messagingSenderId: "980335677636",
-    appId: "1:980335677636:web:a0566f81b81702af60b991"
+const firebaseConfig = {
+  apiKey: "AIzaSyBJWrVFGL0lt8zMfQH8rrYMOj8CWFVsUCg",
+  authDomain: "kwt-discounts.firebaseapp.com",
+  projectId: "kwt-discounts",
+  storageBucket: "kwt-discounts.firebasestorage.app",
+  messagingSenderId: "980335677636",
+  appId: "1:980335677636:web:a0566f81b81702af60b991"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+firebase.auth().signInAnonymously()
+  .then(() => console.log("Signed in anonymously"))
+  .catch(err => console.error("Auth error:", err.code, err.message));
+
+const maxEnergy = 5;
+let energy = Number(localStorage.getItem('energy')) || 0;
+energy = Math.min(energy, maxEnergy);
+const energySpan = document.getElementById('energySpan');
+const energyBar = document.getElementById('energyBar');
+function updateEnergyBar() {
+  const percent = (energy / maxEnergy) * 100;
+  energyBar.style.width = percent + '%';
+  energySpan.innerText = energy;
+}
+updateEnergyBar();
+
+// Экраны
+const homeScreen = document.getElementById('homeScreen');
+const addScreen = document.getElementById('addScreen');
+const findScreen = document.getElementById('findScreen');
+const addBtn = document.getElementById('addBtn');
+const photoInput = document.getElementById('photo');
+const preview = document.getElementById('photo-preview');
+const productList = document.getElementById('product-list');
+const filterCategory = document.getElementById('filterCategory');
+
+document.getElementById('addDiscountBtn').onclick = ()=>{homeScreen.classList.remove('active'); addScreen.classList.add('active');}
+document.getElementById('findDiscountBtn').onclick = ()=>{homeScreen.classList.remove('active'); findScreen.classList.add('active');}
+document.getElementById('backHome1').onclick = ()=>{addScreen.classList.remove('active'); homeScreen.classList.add('active');}
+document.getElementById('backHome2').onclick = ()=>{findScreen.classList.remove('active'); homeScreen.classList.add('active');}
+
+// Фото
+let photoData = null;
+photoInput.addEventListener('change', () => {
+  const file = photoInput.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    photoData = e.target.result;
+    preview.src = photoData;
+    preview.style.display = 'block';
   };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
+  reader.readAsDataURL(file);
+});
 
-  // Анонимная авторизация
-  firebase.auth().signInAnonymously()
-    .then(() => console.log("Signed in anonymously"))
-    .catch(err => console.error("Auth error:", err.code, err.message));
+// Добавить товар
+addBtn.addEventListener('click',()=>{
+  const name = document.getElementById('productName').value.trim();
+  const priceBefore = parseFloat(document.getElementById('priceBefore').value);
+  const priceAfter = parseFloat(document.getElementById('priceAfter').value);
+  const store = document.getElementById('store').value.trim();
+  const address = document.getElementById('address').value.trim();
+  const category = document.getElementById('category').value;
 
-  // Энергия
-  const maxEnergy = 5;
-  let energy = Number(localStorage.getItem('energy')) || 0;
-  energy = Math.min(energy, maxEnergy);
-  const energySpan = document.getElementById('energySpan');
-  const energyBar = document.getElementById('energyBar');
-  function updateEnergyBar() {
-    const percent = (energy / maxEnergy) * 100;
-    energyBar.style.width = percent + '%';
-    energySpan.innerText = energy;
+  if(!photoData || !name || !store || !address || !category || isNaN(priceBefore) || isNaN(priceAfter)){
+    alert('Заполните все поля корректно!');
+    return;
   }
-  updateEnergyBar();
 
-  // Экраны
-  const homeScreen = document.getElementById('homeScreen');
-  const addScreen = document.getElementById('addScreen');
-  const addBtn = document.getElementById('addBtn');
-  const photoInput = document.getElementById('photo');
-  const preview = document.getElementById('photo-preview');
-
-  document.getElementById('addDiscountBtn').onclick = ()=>{homeScreen.classList.remove('active'); addScreen.classList.add('active');}
-  document.getElementById('backHome1').onclick = ()=>{addScreen.classList.remove('active'); homeScreen.classList.add('active');}
-
-  // Фото
-  let photoData = null;
-  photoInput.addEventListener('change', () => {
-    const file = photoInput.files[0];
-    if(!file) return;
-    const reader = new FileReader();
-    reader.onload = e => {
-      photoData = e.target.result;
-      preview.src = photoData;
-      preview.style.display = 'block';
-    };
-    reader.readAsDataURL(file);
-  });
-
-  // Добавить товар
-  addBtn.addEventListener('click',()=>{
-    const name = document.getElementById('productName').value.trim();
-    const priceBefore = parseFloat(document.getElementById('priceBefore').value);
-    const priceAfter = parseFloat(document.getElementById('priceAfter').value);
-    const store = document.getElementById('store').value.trim();
-    const address = document.getElementById('address').value.trim();
-    const category = document.getElementById('category').value;
-
-    if(!photoData || !name || !store || !address || !category || isNaN(priceBefore) || isNaN(priceAfter)){
-      alert('Заполните все поля корректно!');
-      return;
-    }
-
-    function saveProduct(){
-      db.collection('products').add({
-        name, priceBefore, priceAfter, store, address, category, photo: photoData, timestamp: Date.now()
-      }).then(()=>{
-        photoInput.value=''; preview.style.display='none'; photoData=null;
-        document.getElementById('productName').value='';
-        document.getElementById('priceBefore').value='';
-        document.getElementById('priceAfter').value='';
-        document.getElementById('store').value='';
-        document.getElementById('address').value='';
-        document.getElementById('category').value='';
-        updateEnergyBar();
-        alert('✅ Товар добавлен!');
-        addScreen.classList.remove('active');
-        homeScreen.classList.add('active');
-      }).catch(err=>{
-        console.error(err);
-        alert('Ошибка при добавлении товара: ' + err.message);
-      });
-    }
-
-    if(energy>0){
-      energy--; localStorage.setItem('energy',energy);
+  function saveProduct(){
+    db.collection('products').add({
+      name, priceBefore, priceAfter, store, address, category, photo: photoData, timestamp: Date.now()
+    }).then(()=>{
+      photoInput.value=''; preview.style.display='none'; photoData=null;
+      document.getElementById('productName').value='';
+      document.getElementById('priceBefore').value='';
+      document.getElementById('priceAfter').value='';
+      document.getElementById('store').value='';
+      document.getElementById('address').value='';
+      document.getElementById('category').value='';
       updateEnergyBar();
-      saveProduct();
-    } else {
-      alert('Нет энергии! Сначала получите энергию.');
-    }
-  });
+      alert('✅ Товар добавлен!');
+      addScreen.classList.remove('active'); homeScreen.classList.add('active');
+    }).catch(err=>{
+      console.error(err);
+      alert('Ошибка при добавлении товара: ' + err.message);
+    });
+  }
 
-  // Заработать энергию
-  document.getElementById('earnEnergyBtn').addEventListener('click', ()=>{
-    if(energy < maxEnergy){
-      energy++;
-      localStorage.setItem('energy', energy);
-      updateEnergyBar();
-      alert('✅ Вы получили 1 энергию!');
-    } else {
-      alert('Энергия полная!');
-    }
+  if(energy>0){
+    energy--; localStorage.setItem('energy',energy);
+    updateEnergyBar();
+    saveProduct();
+  } else {
+    alert('Нет энергии! Сначала получите энергию.');
+  }
+});
+
+// Заработать энергию
+document.getElementById('earnEnergyBtn').addEventListener('click', ()=>{
+  if(energy < maxEnergy){
+    energy++;
+    localStorage.setItem('energy', energy);
+    updateEnergyBar();
+    alert('✅ Вы получили 1 энергию!');
+  } else {
+    alert('Энергия полная!');
+  }
+});
+
+// Отображение товаров и фильтр
+function renderProducts(categoryFilter=""){
+  db.collection('products').orderBy('timestamp','desc').get().then(snapshot=>{
+    productList.innerHTML='';
+    snapshot.forEach(doc=>{
+      const data = doc.data();
+      if(categoryFilter && data.category !== categoryFilter) return;
+      const div = document.createElement('div');
+      div.className='product';
+      div.innerHTML = `<strong>${data.name}</strong><br>
+        ${data.store}, ${data.address}<br>
+        Цена: ${data.priceBefore} → ${data.priceAfter}<br>
+        Категория: ${data.category}<br>
+        <img src="${data.photo}">`;
+      productList.appendChild(div);
+    });
   });
+}
+filterCategory.addEventListener('change', ()=>{
+  renderProducts(filterCategory.value);
+});
+renderProducts();
 </script>
 
 </body>
