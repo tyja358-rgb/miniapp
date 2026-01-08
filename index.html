@@ -65,7 +65,7 @@
     text-align: center;
   }
 
-  /* Модальное окно категорий */
+  /* Модальное окно магазинов */
   .modal {
     display: none;
     position: fixed;
@@ -93,7 +93,7 @@
     margin-bottom: 15px;
   }
 
-  .category-btn, .add-store-btn {
+  .shop-btn, .address-btn, .add-btn {
     width: 100%;
     padding: 12px 0;
     margin: 5px 0;
@@ -106,7 +106,7 @@
     transition: 0.2s;
   }
 
-  .category-btn:hover, .add-store-btn:hover {
+  .shop-btn:hover, .address-btn:hover, .add-btn:hover {
     background: #4b0082;
   }
 
@@ -115,14 +115,6 @@
     margin-top: 10px;
   }
 
-  input[type="text"] {
-    width: calc(100% - 24px);
-    padding: 8px;
-    margin: 5px 0;
-    border-radius: 8px;
-    border: none;
-    font-size: 16px;
-  }
 </style>
 </head>
 <body>
@@ -138,23 +130,26 @@
   <div id="energy-text">0 / 5</div>
 </div>
 
-<!-- Модальное окно категорий -->
-<div class="modal" id="categoryModal">
+<!-- Модальное окно магазинов -->
+<div class="modal" id="shopModal">
   <div class="modal-content">
-    <h2>Выберите категорию</h2>
-    <div id="categoryList"></div>
-    <button class="category-btn close-btn" id="closeModal">Закрыть</button>
+    <h2>Магазины</h2>
+    <div id="shopList"></div>
+    <input type="text" id="newShopInput" placeholder="Название магазина" style="width:100%; padding:8px; border-radius:8px; margin-top:10px;">
+    <button class="add-btn" id="addShopBtn">Добавить магазин</button>
+    <button class="close-btn" id="closeShopModal">Закрыть</button>
   </div>
 </div>
 
-<!-- Модальное окно магазинов -->
-<div class="modal" id="storeModal">
+<!-- Модальное окно адресов -->
+<div class="modal" id="addressModal">
   <div class="modal-content">
-    <h2>Магазины</h2>
-    <div id="storeList"></div>
-    <input type="text" id="newStoreInput" placeholder="Введите название магазина">
-    <button class="add-store-btn" id="addStoreBtn">Добавить магазин</button>
-    <button class="category-btn close-btn" id="closeStoreModal">Закрыть</button>
+    <h2>Адреса магазина</h2>
+    <div id="addressList"></div>
+    <input type="text" id="newAddressInput" placeholder="Новый адрес" style="width:100%; padding:8px; border-radius:8px; margin-top:10px;">
+    <button class="add-btn" id="addAddressBtn">Добавить адрес вручную</button>
+    <button class="add-btn" id="geoAddressBtn">Добавить адрес по геолокации</button>
+    <button class="close-btn" id="closeAddressModal">Закрыть</button>
   </div>
 </div>
 
@@ -162,6 +157,7 @@
   // ===== Энергия =====
   const maxEnergy = 5;
   let energy = Number(localStorage.getItem('energy')) || 0;
+  energy = Math.min(energy, maxEnergy);
   const energyBar = document.getElementById('energyBar');
   const energyText = document.getElementById('energy-text');
 
@@ -170,81 +166,106 @@
     energyBar.style.width = percent + '%';
     energyText.innerText = `${energy} / ${maxEnergy}`;
   }
-
   updateEnergyBar();
 
-  // ===== Категории =====
-  const categoryModal = document.getElementById('categoryModal');
-  const categoryList = document.getElementById('categoryList');
-  const closeModal = document.getElementById('closeModal');
-
-  const categories = ["Магазины"]; // только Магазины
-
-  function openCategoryModal() {
-    categoryList.innerHTML = '';
-    categories.forEach(cat => {
-      const btn = document.createElement('button');
-      btn.innerText = cat;
-      btn.className = 'category-btn';
-      btn.onclick = () => openStoreModal();
-      categoryList.appendChild(btn);
-    });
-    categoryModal.style.display = 'flex';
-  }
-
-  closeModal.onclick = () => categoryModal.style.display = 'none';
-
-  document.getElementById('addDiscountBtn').onclick = openCategoryModal;
-  document.getElementById('findDiscountBtn').onclick = openCategoryModal;
-
-  // ===== Магазины =====
-  const storeModal = document.getElementById('storeModal');
-  const storeList = document.getElementById('storeList');
-  const closeStoreModal = document.getElementById('closeStoreModal');
-  const newStoreInput = document.getElementById('newStoreInput');
-  const addStoreBtn = document.getElementById('addStoreBtn');
-
-  let stores = JSON.parse(localStorage.getItem('stores')) || [];
-
-  function renderStores() {
-    storeList.innerHTML = '';
-    stores.sort((a,b) => a.localeCompare(b)); // сортировка по алфавиту
-    stores.forEach(store => {
-      const btn = document.createElement('button');
-      btn.innerText = store;
-      btn.className = 'category-btn';
-      btn.onclick = () => alert(`Вы выбрали магазин: ${store}`);
-      storeList.appendChild(btn);
-    });
-  }
-
-  function openStoreModal() {
-    renderStores();
-    storeModal.style.display = 'flex';
-  }
-
-  addStoreBtn.onclick = () => {
-    const name = newStoreInput.value.trim();
-    if(name && !stores.includes(name)) {
-      stores.push(name);
-      localStorage.setItem('stores', JSON.stringify(stores));
-      newStoreInput.value = '';
-      renderStores();
-    } else if (stores.includes(name)) {
-      alert('Такой магазин уже есть!');
-    }
-  }
-
-  closeStoreModal.onclick = () => storeModal.style.display = 'none';
-
-  // ===== Энергия кнопка =====
   document.getElementById('earnEnergyBtn').onclick = () => {
     if (energy < maxEnergy) energy++;
     localStorage.setItem('energy', energy);
     updateEnergyBar();
     alert('✅ Вы получили 1 энергию!');
   };
-</script>
 
+  // ===== Магазины =====
+  const shopModal = document.getElementById('shopModal');
+  const shopList = document.getElementById('shopList');
+  const closeShopModal = document.getElementById('closeShopModal');
+  const newShopInput = document.getElementById('newShopInput');
+  const addShopBtn = document.getElementById('addShopBtn');
+
+  const addressModal = document.getElementById('addressModal');
+  const addressList = document.getElementById('addressList');
+  const newAddressInput = document.getElementById('newAddressInput');
+  const addAddressBtn = document.getElementById('addAddressBtn');
+  const geoAddressBtn = document.getElementById('geoAddressBtn');
+  const closeAddressModal = document.getElementById('closeAddressModal');
+
+  let shops = JSON.parse(localStorage.getItem('shops')) || [];
+  let currentShopIndex = null;
+
+  function saveShops() {
+    localStorage.setItem('shops', JSON.stringify(shops));
+  }
+
+  function renderShops() {
+    shopList.innerHTML = '';
+    shops.sort((a,b)=>a.name.localeCompare(b.name));
+    shops.forEach((shop, index) => {
+      const btn = document.createElement('button');
+      btn.innerText = shop.name;
+      btn.className = 'shop-btn';
+      btn.onclick = () => openAddresses(index);
+      shopList.appendChild(btn);
+    });
+  }
+
+  function renderAddresses() {
+    addressList.innerHTML = '';
+    if(currentShopIndex === null) return;
+    const addresses = shops[currentShopIndex].addresses || [];
+    addresses.forEach((addr, idx) => {
+      const btn = document.createElement('button');
+      btn.innerText = addr.text;
+      btn.className = 'address-btn';
+      addressList.appendChild(btn);
+    });
+  }
+
+  function openAddresses(index) {
+    currentShopIndex = index;
+    renderAddresses();
+    addressModal.style.display = 'flex';
+  }
+
+  addShopBtn.onclick = () => {
+    const name = newShopInput.value.trim();
+    if(!name) return;
+    shops.push({name, addresses: []});
+    newShopInput.value = '';
+    saveShops();
+    renderShops();
+  };
+
+  addAddressBtn.onclick = () => {
+    if(currentShopIndex === null) return;
+    const text = newAddressInput.value.trim();
+    if(!text) return;
+    if(!shops[currentShopIndex].addresses) shops[currentShopIndex].addresses = [];
+    shops[currentShopIndex].addresses.push({text});
+    newAddressInput.value = '';
+    saveShops();
+    renderAddresses();
+  };
+
+  geoAddressBtn.onclick = () => {
+    if(currentShopIndex === null) return;
+    if(!navigator.geolocation) { alert("Геолокация не поддерживается"); return; }
+    navigator.geolocation.getCurrentPosition(pos => {
+      const text = `Lat:${pos.coords.latitude.toFixed(5)}, Lon:${pos.coords.longitude.toFixed(5)}`;
+      if(!shops[currentShopIndex].addresses) shops[currentShopIndex].addresses = [];
+      shops[currentShopIndex].addresses.push({text, lat: pos.coords.latitude, lon: pos.coords.longitude});
+      saveShops();
+      renderAddresses();
+    }, err => alert("Ошибка получения геолокации: "+err.message));
+  };
+
+  closeShopModal.onclick = () => shopModal.style.display = 'none';
+  closeAddressModal.onclick = () => addressModal.style.display = 'none';
+
+  document.getElementById('addDiscountBtn').onclick = () => shopModal.style.display = 'flex';
+  document.getElementById('findDiscountBtn').onclick = () => shopModal.style.display = 'flex';
+
+  renderShops();
+
+</script>
 </body>
 </html>
