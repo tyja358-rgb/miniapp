@@ -11,7 +11,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    background: linear-gradient(135deg, #6a0dad, #4b0082); /* фиолетовый градиент */
+    background: linear-gradient(135deg, #6a0dad, #4b0082);
     font-family: Arial, sans-serif;
   }
 
@@ -25,7 +25,7 @@
   button {
     width: 220px;
     height: 70px;
-    border-radius: 35px; /* круглые кнопки */
+    border-radius: 35px;
     border: none;
     color: white;
     font-size: 20px;
@@ -33,7 +33,7 @@
     cursor: pointer;
     transition: 0.3s;
     box-shadow: 0 8px 15px rgba(0,0,0,0.3);
-    background: linear-gradient(145deg, #1c1c1c, #333); /* карбон */
+    background: linear-gradient(145deg, #1c1c1c, #333);
   }
 
   button:hover {
@@ -52,7 +52,7 @@
 
   .energy-fill {
     height: 100%;
-    background: linear-gradient(90deg, #ffcc00, #ffd700); /* золотой */
+    background: linear-gradient(90deg, #ffcc00, #ffd700);
     width: 0%;
     transition: width 0.3s;
   }
@@ -64,6 +64,57 @@
     font-size: 18px;
     text-align: center;
   }
+
+  /* Модальное окно категорий */
+  .modal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.6);
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+  }
+
+  .modal-content {
+    background: #1c1c1c;
+    border-radius: 15px;
+    padding: 20px;
+    width: 90%;
+    max-width: 400px;
+    color: white;
+    max-height: 80%;
+    overflow-y: auto;
+  }
+
+  .modal-content h2 {
+    text-align: center;
+    margin-bottom: 15px;
+  }
+
+  .category-btn {
+    width: 100%;
+    padding: 12px 0;
+    margin: 5px 0;
+    border-radius: 12px;
+    border: none;
+    background: #333;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+
+  .category-btn:hover {
+    background: #4b0082;
+  }
+
+  .close-btn {
+    background: #ff4444;
+    margin-top: 10px;
+  }
+
 </style>
 </head>
 <body>
@@ -77,6 +128,15 @@
     <div class="energy-fill" id="energyBar"></div>
   </div>
   <div id="energy-text">0 / 5</div>
+</div>
+
+<!-- Модальное окно категорий -->
+<div class="modal" id="categoryModal">
+  <div class="modal-content">
+    <h2>Выберите категорию</h2>
+    <div id="categoryList"></div>
+    <button class="category-btn close-btn" id="closeModal">Закрыть</button>
+  </div>
 </div>
 
 <script>
@@ -96,12 +156,44 @@
   updateEnergyBar();
 
   // ===== Кнопки =====
+  const categoryModal = document.getElementById('categoryModal');
+  const categoryList = document.getElementById('categoryList');
+  const closeModal = document.getElementById('closeModal');
+
+  const categories = [
+    "Автосервисы","Автозапчасти","Шиномонтаж","Аренда авто","Парковки",
+    "Кафе / Кофейни","Рестораны","Фастфуд","Магазины продуктов","Пекарни / Кондитерские","Фермерские продукты",
+    "Билеты","Туристические агенства","Экскурсии","Активный отдых / спорт","Музеи / выставки","Парки развлечений",
+    "Магазины одежды","Обувь","Аксессуары","Салоны красоты / парикмахерские",
+    "Фитнес-клубы / спортзалы","Медицинские центры","Аптеки","Спа / массаж","Йога / пилатес",
+    "Магазины техники","Ремонт техники","Компьютерные услуги","Фото / видео техника",
+    "Строительные материалы","Ремонт квартир / домов","Сад / растения","Мебель",
+    "Школы / репетиторы","Курсы языков","Курсы навыков / хобби","Онлайн-обучение",
+    "Книги / канцелярия","Подарки / сувениры","Услуги доставки","Фото / печать","Финансовые услуги","Животные / зоомагазины"
+  ];
+
+  function openCategoryModal() {
+    categoryList.innerHTML = '';
+    categories.forEach(cat => {
+      const btn = document.createElement('button');
+      btn.innerText = cat;
+      btn.className = 'category-btn';
+      btn.onclick = () => alert(`Вы выбрали категорию: ${cat}`);
+      categoryList.appendChild(btn);
+    });
+    categoryModal.style.display = 'flex';
+  }
+
+  closeModal.onclick = () => {
+    categoryModal.style.display = 'none';
+  };
+
   document.getElementById('addDiscountBtn').onclick = () => {
-    alert('Экран "Добавить" пока не реализован');
+    openCategoryModal();
   };
 
   document.getElementById('findDiscountBtn').onclick = () => {
-    alert('Экран "Найти" пока не реализован');
+    openCategoryModal();
   };
 
   document.getElementById('earnEnergyBtn').onclick = () => {
