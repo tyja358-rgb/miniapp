@@ -65,6 +65,85 @@
     text-align: center;
   }
 
+  .modal {
+    display: none;
+    position: fixed;
+    top:0; left:0;
+    width:100%; height:100%;
+    background: rgba(0,0,0,0.6);
+    justify-content:center;
+    align-items:center;
+    z-index:100;
+  }
+
+  .modal-content {
+    background: #1c1c1c;
+    border-radius: 15px;
+    padding: 20px;
+    width: 90%;
+    max-width: 400px;
+    color: white;
+    max-height: 80%;
+    overflow-y: auto;
+  }
+
+  .modal-content h2 {
+    text-align: center;
+    margin-bottom: 15px;
+  }
+
+  .category-btn {
+    width: 100%;
+    padding: 12px 0;
+    margin: 5px 0;
+    border-radius: 12px;
+    border: none;
+    background: #333;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+
+  .category-btn:hover {
+    background: #4b0082;
+  }
+
+  .close-btn {
+    background: #ff4444;
+    margin-top: 10px;
+  }
+
+  .store-section {
+    border: 1px solid #555;
+    border-radius: 10px;
+    padding: 10px;
+    margin-top: 10px;
+  }
+
+  .store-title {
+    font-weight: bold;
+    margin-bottom: 5px;
+  }
+
+  .address-section, .product-section {
+    margin-left: 10px;
+    margin-bottom: 10px;
+  }
+
+  .product-preview img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    margin-right: 5px;
+    margin-top: 5px;
+    border-radius: 5px;
+  }
+
+  .product-preview {
+    display: flex;
+    flex-wrap: wrap;
+  }
 </style>
 </head>
 <body>
@@ -78,6 +157,26 @@
     <div class="energy-fill" id="energyBar"></div>
   </div>
   <div id="energy-text">0 / 5</div>
+</div>
+
+<!-- Модальное окно категорий -->
+<div class="modal" id="categoryModal">
+  <div class="modal-content">
+    <h2>Магазины</h2>
+    <div id="storeList"></div>
+    <input type="text" id="storeNameInput" placeholder="Название магазина" style="width: 100%; margin-top:5px; padding:5px; border-radius:5px;">
+    <button class="category-btn" id="addStoreBtn">Добавить магазин</button>
+    <button class="category-btn close-btn" id="closeModal">Закрыть</button>
+  </div>
+</div>
+
+<!-- Модальное окно поиска -->
+<div class="modal" id="searchModal">
+  <div class="modal-content">
+    <h2>Поиск магазинов и товаров</h2>
+    <div id="searchList"></div>
+    <button class="category-btn close-btn" id="closeSearch">Закрыть</button>
+  </div>
 </div>
 
 <script>
@@ -96,98 +195,143 @@
 
   updateEnergyBar();
 
-  document.getElementById('earnEnergyBtn').onclick = () => {
-    if (energy < maxEnergy) energy++;
+  // ===== Магазины =====
+  const storeModal = document.getElementById('categoryModal');
+  const storeList = document.getElementById('storeList');
+  const closeModal = document.getElementById('closeModal');
+  const addStoreBtn = document.getElementById('addStoreBtn');
+  const storeNameInput = document.getElementById('storeNameInput');
+
+  let stores = JSON.parse(localStorage.getItem('stores')) || [];
+
+  function renderStores() {
+    storeList.innerHTML = '';
+    stores.sort((a,b)=>a.name.localeCompare(b.name));
+    stores.forEach((store, idx)=>{
+      const div = document.createElement('div');
+      div.className = 'store-section';
+      div.innerHTML = `<div class="store-title">${store.name}</div>
+        <div class="address-section" id="address-${idx}"></div>
+        <button class="category-btn" id="addAddress-${idx}">Добавить адрес</button>
+        <div class="product-section" id="products-${idx}"></div>
+      `;
+      storeList.appendChild(div);
+
+      // Добавление адреса
+      document.getElementById(`addAddress-${idx}`).onclick = () => {
+        if(navigator.geolocation){
+          navigator.geolocation.getCurrentPosition(pos=>{
+            const addr = `Lat: ${pos.coords.latitude.toFixed(5)}, Lng: ${pos.coords.longitude.toFixed(5)}`;
+            if(!store.addresses) store.addresses=[];
+            store.addresses.push({geo: addr, products: []});
+            localStorage.setItem('stores', JSON.stringify(stores));
+            renderStores();
+          });
+        } else {
+          alert('Геолокация не поддерживается');
+        }
+      };
+
+      // Отображение адресов
+      const addrDiv = document.getElementById(`address-${idx}`);
+      if(store.addresses){
+        store.addresses.forEach((a, aidx)=>{
+          const aDiv = document.createElement('div');
+          aDiv.innerHTML = `<b>Адрес ${aidx+1}:</b> ${a.geo} <button class="category-btn" id="addProd-${idx}-${aidx}">Добавить товар</button>
+          <div class="product-preview" id="preview-${idx}-${aidx}"></div>`;
+          addrDiv.appendChild(aDiv);
+
+          document.getElementById(`addProd-${idx}-${aidx}`).onclick = () => {
+            const name = prompt("Название товара:");
+            const priceBefore = prompt("Цена ДО:");
+            const priceAfter = prompt("Цена ПОСЛЕ:");
+            const file = prompt("Ссылка на фото товара (URL)"); // упрощение для демонстрации
+            if(!a.products) a.products=[];
+            a.products.push({name, priceBefore, priceAfter, photo:file});
+            localStorage.setItem('stores', JSON.stringify(stores));
+            renderStores();
+          };
+
+          const previewDiv = document.getElementById(`preview-${idx}-${aidx}`);
+          if(a.products){
+            a.products.forEach(p=>{
+              const img = document.createElement('img');
+              img.src = p.photo;
+              img.title = `${p.name}\nДо: ${p.priceBefore}\nПосле: ${p.priceAfter}`;
+              previewDiv.appendChild(img);
+            });
+          }
+        });
+      }
+    });
+  }
+
+  addStoreBtn.onclick = ()=>{
+    const name = storeNameInput.value.trim();
+    if(name!==''){
+      stores.push({name});
+      localStorage.setItem('stores', JSON.stringify(stores));
+      storeNameInput.value='';
+      renderStores();
+    }
+  }
+
+  closeModal.onclick = ()=>{
+    storeModal.style.display='none';
+  }
+
+  function openStoreModal(){
+    renderStores();
+    storeModal.style.display='flex';
+  }
+
+  // ===== Поиск =====
+  const searchModal = document.getElementById('searchModal');
+  const searchList = document.getElementById('searchList');
+  const closeSearch = document.getElementById('closeSearch');
+
+  function openSearchModal(){
+    searchList.innerHTML='';
+    stores.sort((a,b)=>a.name.localeCompare(b.name));
+    stores.forEach(store=>{
+      const div = document.createElement('div');
+      div.className='store-section';
+      div.innerHTML = `<div class="store-title">${store.name}</div>`;
+      if(store.addresses){
+        store.addresses.forEach((a, aidx)=>{
+          const aDiv = document.createElement('div');
+          aDiv.className='address-section';
+          aDiv.innerHTML=`<b>Адрес:</b> ${a.geo}`;
+          if(a.products){
+            const prodDiv = document.createElement('div');
+            prodDiv.className='product-preview';
+            a.products.forEach(p=>{
+              const img = document.createElement('img');
+              img.src=p.photo;
+              img.title=`${p.name}\nДо: ${p.priceBefore}\nПосле: ${p.priceAfter}`;
+              prodDiv.appendChild(img);
+            });
+            aDiv.appendChild(prodDiv);
+          }
+          div.appendChild(aDiv);
+        });
+      }
+      searchList.appendChild(div);
+    });
+    searchModal.style.display='flex';
+  }
+
+  closeSearch.onclick = ()=>searchModal.style.display='none';
+
+  // ===== Кнопки =====
+  document.getElementById('addDiscountBtn').onclick=openStoreModal;
+  document.getElementById('findDiscountBtn').onclick=openSearchModal;
+  document.getElementById('earnEnergyBtn').onclick=()=>{
+    if(energy<maxEnergy) energy++;
     localStorage.setItem('energy', energy);
     updateEnergyBar();
     alert('✅ Вы получили 1 энергию!');
   };
-
-  // ===== Магазины и товары =====
-  const shops = []; // пока пустой массив, пользователь добавляет сам
-
-  function addShop(name) {
-    if (!shops.some(s => s.name === name)) {
-      shops.push({ name, addresses: [] });
-      shops.sort((a,b)=>a.name.localeCompare(b.name));
-    }
-  }
-
-  function addAddress(shopName, address) {
-    const shop = shops.find(s => s.name===shopName);
-    if(shop && !shop.addresses.some(a=>a.name===address)) {
-      shop.addresses.push({ name: address, items: [] });
-    }
-  }
-
-  function addItem(shopName, addressName, itemName, priceBefore, priceAfter) {
-    const shop = shops.find(s=>s.name===shopName);
-    if(!shop) return;
-    const addr = shop.addresses.find(a=>a.name===addressName);
-    if(!addr) return;
-    addr.items.push({ name: itemName, priceBefore, priceAfter });
-  }
-
-  // ===== Кнопки =====
-  document.getElementById('addDiscountBtn').onclick = () => {
-    // Добавление магазина/адреса/товара
-    const shopName = prompt("Введите название магазина:");
-    if(!shopName) return;
-    addShop(shopName);
-
-    const addressName = prompt("Введите адрес магазина:");
-    if(!addressName) return;
-    addAddress(shopName, addressName);
-
-    const itemName = prompt("Введите название товара:");
-    if(!itemName) return;
-
-    let priceBefore = parseFloat(prompt("Цена до скидки:"));
-    if(isNaN(priceBefore)) return;
-    let priceAfter = parseFloat(prompt("Цена после скидки:"));
-    if(isNaN(priceAfter)) return;
-
-    if(priceBefore - priceAfter < 0.2*priceBefore) {
-      alert("❌ Скидка меньше 20%");
-      return;
-    }
-
-    addItem(shopName, addressName, itemName, priceBefore, priceAfter);
-    alert("✅ Товар добавлен!");
-  };
-
-  document.getElementById('findDiscountBtn').onclick = () => {
-    if(shops.length===0){
-      alert("Нет добавленных магазинов.");
-      return;
-    }
-
-    // Шаг 1: выбрать магазин
-    const shopNames = shops.map((s,i)=>`${i+1}. ${s.name}`).join('\n');
-    const shopIndex = parseInt(prompt("Выберите магазин:\n"+shopNames))-1;
-    if(isNaN(shopIndex) || !shops[shopIndex]) return;
-    const shop = shops[shopIndex];
-
-    // Шаг 2: выбрать товар
-    let allItems = [];
-    shop.addresses.forEach(a=>allItems.push(...a.items));
-    if(allItems.length===0){ alert("Нет товаров в этом магазине."); return; }
-
-    allItems = [...new Map(allItems.map(i=>[i.name,i])).values()]; // уникальные по имени
-    const itemNames = allItems.map((i,j)=>`${j+1}. ${i.name} (${i.priceBefore} → ${i.priceAfter})`).join('\n');
-    const itemIndex = parseInt(prompt("Выберите товар:\n"+itemNames))-1;
-    if(isNaN(itemIndex) || !allItems[itemIndex]) return;
-    const selectedItem = allItems[itemIndex];
-
-    // Шаг 3: выбрать адрес
-    const validAddresses = shop.addresses.filter(a=>a.items.some(it=>it.name===selectedItem.name));
-    const addressNames = validAddresses.map((a,j)=>`${j+1}. ${a.name}`).join('\n');
-    const addressIndex = parseInt(prompt("Выберите адрес для товара:\n"+addressNames))-1;
-    if(isNaN(addressIndex) || !validAddresses[addressIndex]) return;
-
-    alert(`Вы выбрали:\nМагазин: ${shop.name}\nТовар: ${selectedItem.name}\nАдрес: ${validAddresses[addressIndex].name}`);
-  };
-
 </script>
 
 </body>
