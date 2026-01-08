@@ -5,73 +5,109 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MiniApp Start</title>
 <style>
+  /* ===== BODY / BACKGROUND ===== */
   body {
     margin: 0;
+    padding: 0;
     height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
-    background: linear-gradient(135deg, #6a0dad, #4b0082); /* фиолетовый градиент */
+    background: radial-gradient(circle at center, rgba(160,120,255,0.35) 0%, #5B2CFF 35%, #3B82F6 70%, #06B6D4 100%);
     font-family: Arial, sans-serif;
+    overflow: hidden;
   }
 
+  /* ===== CONTAINER ===== */
   .container {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 25px;
+    gap: 22px;
+    max-width: 420px;
+    width: 90%;
+    position: relative;
   }
 
+  /* ===== GLOW AURA ===== */
+  .glow-zone {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: calc(100% + 60px);
+    height: calc(100% + 60px);
+    transform: translate(-50%, -50%);
+    background: rgba(99,102,241,0.25);
+    filter: blur(40px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ===== BUTTONS ===== */
   button {
-    width: 220px;
-    height: 70px;
-    border-radius: 35px; /* круглые кнопки */
-    border: none;
-    color: white;
-    font-size: 20px;
-    font-weight: bold;
+    width: 90%;
+    height: 76px;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.06);
+    background: linear-gradient(145deg, #0B0B0B, #2A2A2A);
+    color: #F5F5F5;
+    font-size: 23px;
+    font-weight: 900;
+    letter-spacing: 1.3px;
     cursor: pointer;
-    transition: 0.3s;
-    box-shadow: 0 8px 15px rgba(0,0,0,0.3);
-    background: linear-gradient(145deg, #1c1c1c, #333); /* карбон */
+    box-shadow: 0 10px 20px rgba(0,0,0,0.55), 0 0 25px rgba(139,92,246,0.55);
+    position: relative;
+    z-index: 1;
+    transition: all 0.3s ease;
   }
 
   button:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 12px 20px rgba(0,0,0,0.4);
+    box-shadow: 0 12px 25px rgba(0,0,0,0.6), 0 0 45px #22D3EE;
+    transform: translateY(-2px);
   }
 
+  button:active {
+    transform: translateY(6px);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.55);
+  }
+
+  /* ===== ENERGY BAR ===== */
   .energy-bar {
-    width: 250px;
-    height: 25px;
-    background: #555;
-    border-radius: 12px;
+    width: 90%;
+    height: 22px;
+    background: rgba(0,0,0,0.35);
+    border-radius: 14px;
+    box-shadow: inset 0 0 6px rgba(0,0,0,0.5);
     overflow: hidden;
-    margin-top: 15px;
+    margin-top: 12px;
   }
 
   .energy-fill {
     height: 100%;
-    background: linear-gradient(90deg, #ffcc00, #ffd700); /* золотой */
     width: 0%;
-    transition: width 0.3s;
+    background: linear-gradient(90deg, #22D3EE, #A855F7);
+    box-shadow: 0 0 12px rgba(168,85,247,0.9);
+    transition: width 0.3s ease;
   }
 
   #energy-text {
     margin-top: 5px;
-    color: white;
-    font-weight: bold;
     font-size: 18px;
+    font-weight: bold;
+    color: #F0E9FF;
     text-align: center;
+    text-shadow: 0 0 6px rgba(255,255,255,0.5);
   }
 </style>
 </head>
 <body>
 
 <div class="container">
-  <button id="addDiscountBtn">Добавить</button>
-  <button id="findDiscountBtn">Найти</button>
-  <button id="earnEnergyBtn">Энергия</button>
+  <div class="glow-zone"></div>
+
+  <button id="addBtn">Добавить</button>
+  <button id="findBtn">Найти</button>
+  <button id="energyBtn">Энергия</button>
 
   <div class="energy-bar">
     <div class="energy-fill" id="energyBar"></div>
@@ -80,10 +116,11 @@
 </div>
 
 <script>
-  // ===== Энергия =====
+  // ===== ENERGY LOGIC =====
   const maxEnergy = 5;
   let energy = Number(localStorage.getItem('energy')) || 0;
   energy = Math.min(energy, maxEnergy);
+
   const energyBar = document.getElementById('energyBar');
   const energyText = document.getElementById('energy-text');
 
@@ -95,20 +132,24 @@
 
   updateEnergyBar();
 
-  // ===== Кнопки =====
-  document.getElementById('addDiscountBtn').onclick = () => {
-    alert('Экран "Добавить" пока не реализован');
+  // ===== BUTTON LOGIC =====
+  document.getElementById('addBtn').onclick = () => {
+    alert('Переход на экран "Добавить" (будет интеграция энергии позже)');
   };
 
-  document.getElementById('findDiscountBtn').onclick = () => {
-    alert('Экран "Найти" пока не реализован');
+  document.getElementById('findBtn').onclick = () => {
+    alert('Переход на экран "Найти"');
   };
 
-  document.getElementById('earnEnergyBtn').onclick = () => {
-    if (energy < maxEnergy) energy++;
-    localStorage.setItem('energy', energy);
-    updateEnergyBar();
-    alert('✅ Вы получили 1 энергию!');
+  document.getElementById('energyBtn').onclick = () => {
+    if (energy < maxEnergy) {
+      energy++;
+      localStorage.setItem('energy', energy);
+      updateEnergyBar();
+      alert('✅ Вы получили 1 энергию!');
+    } else {
+      alert('Энергия уже максимальна');
+    }
   };
 </script>
 
