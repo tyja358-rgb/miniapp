@@ -3,184 +3,260 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MiniApp</title>
-
+<title>MiniApp - Скидки</title>
 <style>
-  body {
+  /* ===== Общий фон ===== */
+  body, html {
     margin: 0;
-    height: 100vh;
+    padding: 0;
+    height: 100%;
     font-family: Arial, sans-serif;
-
-    /* ===== ПРЕМИАЛЬНЫЙ ФОН ===== */
-    background:
-      radial-gradient(circle at 50% 35%, rgba(160,120,255,0.35), transparent 45%),
-      linear-gradient(135deg, #5b2cff, #3b82f6, #06b6d4);
-
+    background: linear-gradient(135deg, #4b0082, #8a2be2);
     display: flex;
     justify-content: center;
     align-items: center;
     overflow: hidden;
+    color: #fff;
   }
 
-  .container {
-    width: 100%;
-    max-width: 420px;
-    text-align: center;
-    position: relative;
-  }
-
-  /* ===== СВЕТОВОЙ ОРЕОЛ ЗА КНОПКАМИ ===== */
-  .glow {
+  /* ===== Главные экраны ===== */
+  .screen {
     position: absolute;
-    inset: -60px;
-    background:
-      radial-gradient(circle at center, rgba(99,102,241,0.25), transparent 60%);
-    filter: blur(40px);
-    z-index: 0;
+    width: 100%;
+    height: 100%;
+    top:0; left:0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    transition: 0.3s;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .screen.active {
+    opacity: 1;
+    pointer-events: all;
   }
 
-  /* ===== КАРБОНОВЫЕ МАССИВНЫЕ КНОПКИ ===== */
-  .massive-btn {
-    position: relative;
-    z-index: 1;
-
-    width: 90%;
-    margin: 22px auto;
-    padding: 30px 0;
-    font-size: 23px;
-    font-weight: 900;
-    letter-spacing: 1.3px;
-    color: #f5f5f5;
-
-    border-radius: 20px;
+  /* ===== Кнопки ===== */
+  button {
+    background: #222;
+    color: #fff;
     border: none;
+    border-radius: 50%;
+    width: 160px;
+    height: 160px;
+    font-size: 1.2rem;
+    margin: 20px;
     cursor: pointer;
-
-    background:
-      linear-gradient(180deg, #2a2a2a, #0b0b0b),
-      repeating-linear-gradient(
-        45deg,
-        #1c1c1c,
-        #1c1c1c 10px,
-        #242424 10px,
-        #242424 20px
-      );
-
-    box-shadow:
-      0 0 0 1px rgba(255,255,255,0.06),
-      0 10px 0 #000,
-      0 20px 30px rgba(0,0,0,0.55),
-      0 0 25px rgba(139,92,246,0.55);
-
-    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 0 20px rgba(255,255,255,0.3);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  button:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 40px rgba(255,255,255,0.6);
   }
 
-  .massive-btn:hover {
-    box-shadow:
-      0 0 0 1px rgba(255,255,255,0.1),
-      0 10px 0 #000,
-      0 22px 34px rgba(0,0,0,0.65),
-      0 0 45px rgba(34,211,238,0.8);
-  }
-
-  .massive-btn:active {
-    transform: translateY(6px);
-    box-shadow:
-      0 6px 0 #000,
-      0 12px 18px rgba(0,0,0,0.6),
-      0 0 25px rgba(34,211,238,0.6);
-  }
-
-  /* ===== ЭНЕРГИЯ ===== */
-  .energy {
-    margin-top: 38px;
-    width: 90%;
-    margin-left: auto;
-    margin-right: auto;
-    position: relative;
-    z-index: 1;
-  }
-
-  .energy-bg {
-    height: 22px;
-    background: rgba(0,0,0,0.35);
-    border-radius: 14px;
+  /* ===== Шкала энергии ===== */
+  .energy-bar-container {
+    width: 80%;
+    height: 20px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 10px;
+    margin-top: 30px;
     overflow: hidden;
-    box-shadow: inset 0 3px 10px rgba(0,0,0,0.8);
   }
-
   .energy-bar {
     height: 100%;
     width: 0%;
-    background: linear-gradient(90deg, #22d3ee, #a855f7);
-    box-shadow: 0 0 18px rgba(168,85,247,0.9);
+    background: linear-gradient(90deg, #ffea00, #ffd700);
+    border-radius: 10px;
     transition: width 0.3s;
   }
-
   .energy-text {
-    margin-top: 14px;
+    margin-top: 5px;
     font-weight: bold;
-    color: #f0e9ff;
-    text-shadow: 0 0 8px rgba(255,255,255,0.5);
+  }
+
+  /* ===== Экран добавления ===== */
+  .add-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 80%;
+    max-width: 400px;
+  }
+  input, select {
+    padding: 10px;
+    font-size: 1rem;
+    border-radius: 8px;
+    border: none;
+  }
+  #photo-preview {
+    max-width: 100%;
+    display: none;
+    border-radius: 8px;
+  }
+
+  .back-btn {
+    margin-top: 20px;
+    background: #444;
+    border-radius: 8px;
+    width: 100px;
+    height: 40px;
+    font-size: 1rem;
   }
 </style>
 </head>
 <body>
 
-<div class="container">
-  <div class="glow"></div>
-
-  <button class="massive-btn" id="addBtn">
-    ➕ ДОБАВИТЬ
-  </button>
-
-  <button class="massive-btn" id="findBtn">
-    🔍 НАЙТИ
-  </button>
-
-  <button class="massive-btn" id="energyBtn">
-    ⚡ ЭНЕРГИЯ
-  </button>
-
-  <div class="energy">
-    <div class="energy-bg">
-      <div class="energy-bar" id="energyBar"></div>
-    </div>
-    <div class="energy-text">
-      Энергия: <span id="energyValue">0</span> / 5
-    </div>
+<!-- ===== Главная страница ===== -->
+<div id="homeScreen" class="screen active">
+  <button id="addDiscountBtn">Добавить</button>
+  <button id="findDiscountBtn">Искать</button>
+  <button id="earnEnergyBtn">Энергия</button>
+  <div class="energy-bar-container">
+    <div id="energyBar" class="energy-bar"></div>
   </div>
+  <div id="energySpan" class="energy-text">0</div>
 </div>
 
+<!-- ===== Экран добавления ===== -->
+<div id="addScreen" class="screen">
+  <form class="add-form" id="addForm">
+    <input type="text" id="productName" placeholder="Название товара" required>
+    <input type="number" id="priceBefore" placeholder="Цена до скидки" required>
+    <input type="number" id="priceAfter" placeholder="Цена после скидки" required>
+    <input type="text" id="store" placeholder="Магазин" required>
+    <input type="text" id="address" placeholder="Адрес" required>
+    <select id="category">
+      <option value="">Выберите категорию</option>
+      <option value="Авто">Авто</option>
+      <option value="Еда">Еда</option>
+      <option value="Путешествия">Путешествия</option>
+      <option value="Одежда">Одежда</option>
+      <option value="Другое">Другое</option>
+    </select>
+    <input type="file" id="photo" accept="image/*">
+    <img id="photo-preview">
+    <button type="button" id="addBtn">Сохранить</button>
+  </form>
+  <button class="back-btn" id="backHome1">Назад</button>
+</div>
+
+<!-- ===== Firebase ===== -->
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
 <script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBJWrVFGL0lt8zMfQH8rrYMOj8CWFVsUCg",
+    authDomain: "kwt-discounts.firebaseapp.com",
+    projectId: "kwt-discounts",
+    storageBucket: "kwt-discounts.firebasestorage.app",
+    messagingSenderId: "980335677636",
+    appId: "1:980335677636:web:a0566f81b81702af60b991"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  // Анонимная авторизация
+  firebase.auth().signInAnonymously()
+    .then(() => console.log("Signed in anonymously"))
+    .catch(err => console.error("Auth error:", err.code, err.message));
+
+  // Энергия
   const maxEnergy = 5;
   let energy = Number(localStorage.getItem('energy')) || 0;
   energy = Math.min(energy, maxEnergy);
-
-  const bar = document.getElementById('energyBar');
-  const val = document.getElementById('energyValue');
-
-  function update() {
-    val.textContent = energy;
-    bar.style.width = (energy / maxEnergy * 100) + '%';
+  const energySpan = document.getElementById('energySpan');
+  const energyBar = document.getElementById('energyBar');
+  function updateEnergyBar() {
+    const percent = (energy / maxEnergy) * 100;
+    energyBar.style.width = percent + '%';
+    energySpan.innerText = energy;
   }
-  update();
+  updateEnergyBar();
 
-  document.getElementById('energyBtn').onclick = () => {
-    if (energy < maxEnergy) {
+  // Экраны
+  const homeScreen = document.getElementById('homeScreen');
+  const addScreen = document.getElementById('addScreen');
+  const addBtn = document.getElementById('addBtn');
+  const photoInput = document.getElementById('photo');
+  const preview = document.getElementById('photo-preview');
+
+  document.getElementById('addDiscountBtn').onclick = ()=>{homeScreen.classList.remove('active'); addScreen.classList.add('active');}
+  document.getElementById('backHome1').onclick = ()=>{addScreen.classList.remove('active'); homeScreen.classList.add('active');}
+
+  // Фото
+  let photoData = null;
+  photoInput.addEventListener('change', () => {
+    const file = photoInput.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      photoData = e.target.result;
+      preview.src = photoData;
+      preview.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // Добавить товар
+  addBtn.addEventListener('click',()=>{
+    const name = document.getElementById('productName').value.trim();
+    const priceBefore = parseFloat(document.getElementById('priceBefore').value);
+    const priceAfter = parseFloat(document.getElementById('priceAfter').value);
+    const store = document.getElementById('store').value.trim();
+    const address = document.getElementById('address').value.trim();
+    const category = document.getElementById('category').value;
+
+    if(!photoData || !name || !store || !address || !category || isNaN(priceBefore) || isNaN(priceAfter)){
+      alert('Заполните все поля корректно!');
+      return;
+    }
+
+    function saveProduct(){
+      db.collection('products').add({
+        name, priceBefore, priceAfter, store, address, category, photo: photoData, timestamp: Date.now()
+      }).then(()=>{
+        photoInput.value=''; preview.style.display='none'; photoData=null;
+        document.getElementById('productName').value='';
+        document.getElementById('priceBefore').value='';
+        document.getElementById('priceAfter').value='';
+        document.getElementById('store').value='';
+        document.getElementById('address').value='';
+        document.getElementById('category').value='';
+        updateEnergyBar();
+        alert('✅ Товар добавлен!');
+        addScreen.classList.remove('active');
+        homeScreen.classList.add('active');
+      }).catch(err=>{
+        console.error(err);
+        alert('Ошибка при добавлении товара: ' + err.message);
+      });
+    }
+
+    if(energy>0){
+      energy--; localStorage.setItem('energy',energy);
+      updateEnergyBar();
+      saveProduct();
+    } else {
+      alert('Нет энергии! Сначала получите энергию.');
+    }
+  });
+
+  // Заработать энергию
+  document.getElementById('earnEnergyBtn').addEventListener('click', ()=>{
+    if(energy < maxEnergy){
       energy++;
       localStorage.setItem('energy', energy);
-      update();
+      updateEnergyBar();
+      alert('✅ Вы получили 1 энергию!');
+    } else {
+      alert('Энергия полная!');
     }
-  };
-
-  document.getElementById('addBtn').onclick = () => {
-    alert('Экран добавления — следующий этап');
-  };
-
-  document.getElementById('findBtn').onclick = () => {
-    alert('Экран поиска — следующий этап');
-  };
+  });
 </script>
 
 </body>
