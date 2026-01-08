@@ -100,7 +100,7 @@
     margin-bottom: 10px;
   }
 
-  .category-btn, .sub-btn {
+  .sub-btn {
     width: 100%;
     padding: 10px 0;
     margin: 5px 0;
@@ -113,7 +113,7 @@
     transition: 0.2s;
   }
 
-  .category-btn:hover, .sub-btn:hover {
+  .sub-btn:hover {
     background: #4b0082;
   }
 
@@ -151,7 +151,7 @@
     <input type="text" id="newStoreName" placeholder="Название магазина">
     <button class="sub-btn" id="addStoreBtn">Добавить магазин</button>
     <div id="storeList"></div>
-    <button class="category-btn close-btn" id="closeModal">Закрыть</button>
+    <button class="sub-btn close-btn" id="closeModal">Закрыть</button>
   </div>
 </div>
 
@@ -190,7 +190,7 @@
       const storeDiv = document.createElement('div');
       storeDiv.className = 'store-item';
       storeDiv.innerHTML = `<strong>${store.name}</strong>`;
-      
+
       // Добавить адрес
       const addrInput = document.createElement('input');
       addrInput.placeholder = 'Добавить адрес';
@@ -201,7 +201,7 @@
         const addr = addrInput.value.trim();
         if(addr){
           store.addresses = store.addresses || [];
-          store.addresses.push({text: addr, confirmed:false, products:[]});
+          store.addresses.push({text: addr, products:[]});
           addrInput.value = '';
           saveStores();
           renderStores();
@@ -213,19 +213,10 @@
 
       // Список адресов
       if(store.addresses){
-        store.addresses.forEach((addrObj, aIndex)=>{
+        store.addresses.forEach((addrObj)=>{
           const addrDiv = document.createElement('div');
           addrDiv.className = 'address-item';
-          addrDiv.innerHTML = `${addrObj.text} ${addrObj.confirmed ? '(подтверждено)' : ''}`;
-          
-          const confirmBtn = document.createElement('button');
-          confirmBtn.className = 'sub-btn';
-          confirmBtn.innerText = 'Подтвердить';
-          confirmBtn.onclick = ()=>{
-            addrObj.confirmed = true;
-            saveStores();
-            renderStores();
-          }
+          addrDiv.innerHTML = addrObj.text;
 
           // Добавить товар
           const photoInput = document.createElement('input');
@@ -259,7 +250,6 @@
             reader.readAsDataURL(file);
           }
 
-          addrDiv.appendChild(confirmBtn);
           addrDiv.appendChild(photoInput);
           addrDiv.appendChild(priceBefore);
           addrDiv.appendChild(priceAfter);
