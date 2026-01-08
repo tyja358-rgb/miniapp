@@ -9,99 +9,126 @@
   body {
     margin: 0;
     height: 100vh;
+    font-family: Arial, sans-serif;
 
-    /* ===== ГЛУБОКИЙ ФИОЛЕТОВЫЙ ФОН ===== */
-    background: linear-gradient(
-      180deg,
-      #2b0a3d 0%,
-      #3a0f5c 35%,
-      #4b1375 70%,
-      #2b0a3d 100%
-    );
+    /* ===== ПРЕМИАЛЬНЫЙ ФОН ===== */
+    background:
+      radial-gradient(circle at 50% 35%, rgba(160,120,255,0.35), transparent 45%),
+      linear-gradient(135deg, #5b2cff, #3b82f6, #06b6d4);
 
     display: flex;
     justify-content: center;
     align-items: center;
-    font-family: Arial, sans-serif;
+    overflow: hidden;
   }
 
   .container {
     width: 100%;
     max-width: 420px;
     text-align: center;
+    position: relative;
   }
 
-  /* ===== МАССИВНЫЕ КАРБОНОВЫЕ КНОПКИ ===== */
+  /* ===== СВЕТОВОЙ ОРЕОЛ ЗА КНОПКАМИ ===== */
+  .glow {
+    position: absolute;
+    inset: -60px;
+    background:
+      radial-gradient(circle at center, rgba(99,102,241,0.25), transparent 60%);
+    filter: blur(40px);
+    z-index: 0;
+  }
+
+  /* ===== КАРБОНОВЫЕ МАССИВНЫЕ КНОПКИ ===== */
   .massive-btn {
+    position: relative;
+    z-index: 1;
+
     width: 90%;
     margin: 22px auto;
-    padding: 28px 0;
-    font-size: 22px;
+    padding: 30px 0;
+    font-size: 23px;
     font-weight: 900;
-    letter-spacing: 1.2px;
-    color: #eee;
-    border-radius: 18px;
+    letter-spacing: 1.3px;
+    color: #f5f5f5;
+
+    border-radius: 20px;
     border: none;
     cursor: pointer;
 
     background:
-      linear-gradient(180deg, #2b2b2b, #0b0b0b),
+      linear-gradient(180deg, #2a2a2a, #0b0b0b),
       repeating-linear-gradient(
         45deg,
-        #1a1a1a,
-        #1a1a1a 10px,
-        #222 10px,
-        #222 20px
+        #1c1c1c,
+        #1c1c1c 10px,
+        #242424 10px,
+        #242424 20px
       );
 
     box-shadow:
-      inset 0 4px 6px rgba(255,255,255,0.12),
-      inset 0 -6px 12px rgba(0,0,0,0.95),
+      0 0 0 1px rgba(255,255,255,0.06),
       0 10px 0 #000,
-      0 18px 28px rgba(0,0,0,0.7);
+      0 20px 30px rgba(0,0,0,0.55),
+      0 0 25px rgba(139,92,246,0.55);
+
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+
+  .massive-btn:hover {
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.1),
+      0 10px 0 #000,
+      0 22px 34px rgba(0,0,0,0.65),
+      0 0 45px rgba(34,211,238,0.8);
   }
 
   .massive-btn:active {
     transform: translateY(6px);
     box-shadow:
-      inset 0 4px 10px rgba(0,0,0,0.9),
       0 6px 0 #000,
-      0 10px 14px rgba(0,0,0,0.6);
+      0 12px 18px rgba(0,0,0,0.6),
+      0 0 25px rgba(34,211,238,0.6);
   }
 
   /* ===== ЭНЕРГИЯ ===== */
   .energy {
-    margin-top: 36px;
+    margin-top: 38px;
     width: 90%;
     margin-left: auto;
     margin-right: auto;
+    position: relative;
+    z-index: 1;
   }
 
   .energy-bg {
-    height: 20px;
-    background: rgba(0,0,0,0.5);
-    border-radius: 12px;
+    height: 22px;
+    background: rgba(0,0,0,0.35);
+    border-radius: 14px;
     overflow: hidden;
-    box-shadow: inset 0 3px 8px rgba(0,0,0,0.8);
+    box-shadow: inset 0 3px 10px rgba(0,0,0,0.8);
   }
 
   .energy-bar {
     height: 100%;
     width: 0%;
-    background: linear-gradient(90deg, #a855f7, #22d3ee);
+    background: linear-gradient(90deg, #22d3ee, #a855f7);
+    box-shadow: 0 0 18px rgba(168,85,247,0.9);
     transition: width 0.3s;
   }
 
   .energy-text {
-    margin-top: 12px;
+    margin-top: 14px;
     font-weight: bold;
-    color: #e9d5ff;
+    color: #f0e9ff;
+    text-shadow: 0 0 8px rgba(255,255,255,0.5);
   }
 </style>
 </head>
 <body>
 
 <div class="container">
+  <div class="glow"></div>
 
   <button class="massive-btn" id="addBtn">
     ➕ ДОБАВИТЬ
@@ -123,7 +150,6 @@
       Энергия: <span id="energyValue">0</span> / 5
     </div>
   </div>
-
 </div>
 
 <script>
@@ -149,11 +175,11 @@
   };
 
   document.getElementById('addBtn').onclick = () => {
-    alert('Экран добавления — следующий шаг');
+    alert('Экран добавления — следующий этап');
   };
 
   document.getElementById('findBtn').onclick = () => {
-    alert('Экран поиска — следующий шаг');
+    alert('Экран поиска — следующий этап');
   };
 </script>
 
