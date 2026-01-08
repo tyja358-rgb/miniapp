@@ -11,6 +11,165 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    background: linear-gradient(135deg, #6a0dad, #4b0082);
+    font-family: Arial, sans-serif;
+  }
+
+  .container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 25px;
+  }
+
+  button {
+    width: 220px;
+    height: 70px;
+    border-radius: 35px;
+    border: none;
+    color: white;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+    box-shadow: 0 8px 15px rgba(0,0,0,0.3);
+    background: linear-gradient(145deg, #1c1c1c, #333);
+  }
+
+  button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 20px rgba(0,0,0,0.4);
+  }
+
+  .energy-bar {
+    width: 250px;
+    height: 25px;
+    background: #555;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-top: 15px;
+  }
+
+  .energy-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #22D3EE, #A855F7);
+    width: 0%;
+    transition: width 0.3s;
+  }
+
+  #energy-text {
+    margin-top: 5px;
+    color: white;
+    font-weight: bold;
+    font-size: 18px;
+    text-align: center;
+  }
+
+  .categories {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 15px;
+  }
+
+  .category-btn {
+    padding: 10px 15px;
+    border-radius: 20px;
+    border: none;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    background: #3B82F6;
+    color: white;
+    transition: 0.3s;
+  }
+
+  .category-btn:hover {
+    background: #06B6D4;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <button id="addDiscountBtn">Добавить</button>
+  <button id="findDiscountBtn">Найти</button>
+  <button id="earnEnergyBtn">Энергия</button>
+
+  <div class="energy-bar">
+    <div class="energy-fill" id="energyBar"></div>
+  </div>
+  <div id="energy-text">0 / 5</div>
+
+  <div class="categories" id="categoriesContainer">
+    <!-- Категории будут здесь -->
+  </div>
+</div>
+
+<script>
+  // ===== Энергия =====
+  const maxEnergy = 5;
+  let energy = Number(localStorage.getItem('energy')) || 0;
+  energy = Math.min(energy, maxEnergy);
+  const energyBar = document.getElementById('energyBar');
+  const energyText = document.getElementById('energy-text');
+
+  function updateEnergyBar() {
+    const percent = (energy / maxEnergy) * 100;
+    energyBar.style.width = percent + '%';
+    energyText.innerText = `${energy} / ${maxEnergy}`;
+  }
+
+  updateEnergyBar();
+
+  // ===== Кнопки =====
+  document.getElementById('addDiscountBtn').onclick = () => {
+    alert('Экран "Добавить" пока не реализован');
+  };
+
+  document.getElementById('findDiscountBtn').onclick = () => {
+    alert('Экран "Найти" пока не реализован');
+  };
+
+  document.getElementById('earnEnergyBtn').onclick = () => {
+    if (energy < maxEnergy) energy++;
+    localStorage.setItem('energy', energy);
+    updateEnergyBar();
+    alert('✅ Вы получили 1 энергию!');
+  };
+
+  // ===== Категории =====
+  const categories = [
+    'Авто', 'Еда', 'Одежда', 'Путешествия', 'Развлечения', 
+    'Супермаркеты', 'Электроника', 'Красота', 'Дом', 'Спорт'
+  ];
+
+  const categoriesContainer = document.getElementById('categoriesContainer');
+
+  categories.forEach(cat => {
+    const btn = document.createElement('button');
+    btn.className = 'category-btn';
+    btn.innerText = cat;
+    btn.onclick = () => alert(`Выбрана категория: ${cat}`);
+    categoriesContainer.appendChild(btn);
+  });
+</script>
+
+</body>
+</html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MiniApp Start</title>
+<style>
+  body {
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     background: linear-gradient(135deg, #5B2CFF, #3B82F6);
     font-family: Arial, sans-serif;
     color: #fff;
