@@ -93,7 +93,7 @@
     margin-bottom: 15px;
   }
 
-  .category-btn {
+  .category-btn, .add-store-btn {
     width: 100%;
     padding: 12px 0;
     margin: 5px 0;
@@ -106,7 +106,7 @@
     transition: 0.2s;
   }
 
-  .category-btn:hover {
+  .category-btn:hover, .add-store-btn:hover {
     background: #4b0082;
   }
 
@@ -115,6 +115,14 @@
     margin-top: 10px;
   }
 
+  input[type="text"] {
+    width: calc(100% - 24px);
+    padding: 8px;
+    margin: 5px 0;
+    border-radius: 8px;
+    border: none;
+    font-size: 16px;
+  }
 </style>
 </head>
 <body>
@@ -139,11 +147,21 @@
   </div>
 </div>
 
+<!-- Модальное окно магазинов -->
+<div class="modal" id="storeModal">
+  <div class="modal-content">
+    <h2>Магазины</h2>
+    <div id="storeList"></div>
+    <input type="text" id="newStoreInput" placeholder="Введите название магазина">
+    <button class="add-store-btn" id="addStoreBtn">Добавить магазин</button>
+    <button class="category-btn close-btn" id="closeStoreModal">Закрыть</button>
+  </div>
+</div>
+
 <script>
   // ===== Энергия =====
   const maxEnergy = 5;
   let energy = Number(localStorage.getItem('energy')) || 0;
-  energy = Math.min(energy, maxEnergy);
   const energyBar = document.getElementById('energyBar');
   const energyText = document.getElementById('energy-text');
 
@@ -155,15 +173,12 @@
 
   updateEnergyBar();
 
-  // ===== Кнопки =====
+  // ===== Категории =====
   const categoryModal = document.getElementById('categoryModal');
   const categoryList = document.getElementById('categoryList');
   const closeModal = document.getElementById('closeModal');
 
-  // Здесь только одна категория "Магазины"
-  const categories = [
-    "Магазины"
-  ];
+  const categories = ["Магазины"]; // только Магазины
 
   function openCategoryModal() {
     categoryList.innerHTML = '';
@@ -171,24 +186,58 @@
       const btn = document.createElement('button');
       btn.innerText = cat;
       btn.className = 'category-btn';
-      btn.onclick = () => alert(`Вы выбрали категорию: ${cat}`);
+      btn.onclick = () => openStoreModal();
       categoryList.appendChild(btn);
     });
     categoryModal.style.display = 'flex';
   }
 
-  closeModal.onclick = () => {
-    categoryModal.style.display = 'none';
-  };
+  closeModal.onclick = () => categoryModal.style.display = 'none';
 
-  document.getElementById('addDiscountBtn').onclick = () => {
-    openCategoryModal();
-  };
+  document.getElementById('addDiscountBtn').onclick = openCategoryModal;
+  document.getElementById('findDiscountBtn').onclick = openCategoryModal;
 
-  document.getElementById('findDiscountBtn').onclick = () => {
-    openCategoryModal();
-  };
+  // ===== Магазины =====
+  const storeModal = document.getElementById('storeModal');
+  const storeList = document.getElementById('storeList');
+  const closeStoreModal = document.getElementById('closeStoreModal');
+  const newStoreInput = document.getElementById('newStoreInput');
+  const addStoreBtn = document.getElementById('addStoreBtn');
 
+  let stores = JSON.parse(localStorage.getItem('stores')) || [];
+
+  function renderStores() {
+    storeList.innerHTML = '';
+    stores.sort((a,b) => a.localeCompare(b)); // сортировка по алфавиту
+    stores.forEach(store => {
+      const btn = document.createElement('button');
+      btn.innerText = store;
+      btn.className = 'category-btn';
+      btn.onclick = () => alert(`Вы выбрали магазин: ${store}`);
+      storeList.appendChild(btn);
+    });
+  }
+
+  function openStoreModal() {
+    renderStores();
+    storeModal.style.display = 'flex';
+  }
+
+  addStoreBtn.onclick = () => {
+    const name = newStoreInput.value.trim();
+    if(name && !stores.includes(name)) {
+      stores.push(name);
+      localStorage.setItem('stores', JSON.stringify(stores));
+      newStoreInput.value = '';
+      renderStores();
+    } else if (stores.includes(name)) {
+      alert('Такой магазин уже есть!');
+    }
+  }
+
+  closeStoreModal.onclick = () => storeModal.style.display = 'none';
+
+  // ===== Энергия кнопка =====
   document.getElementById('earnEnergyBtn').onclick = () => {
     if (energy < maxEnergy) energy++;
     localStorage.setItem('energy', energy);
