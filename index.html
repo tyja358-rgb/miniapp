@@ -65,15 +65,16 @@
     text-align: center;
   }
 
+  /* Модальные окна */
   .modal {
     display: none;
     position: fixed;
-    top:0; left:0;
-    width:100%; height:100%;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
     background: rgba(0,0,0,0.6);
-    justify-content:center;
-    align-items:center;
-    z-index:100;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
   }
 
   .modal-content {
@@ -92,7 +93,7 @@
     margin-bottom: 15px;
   }
 
-  .category-btn {
+  .category-btn, .shop-btn, .address-btn, .add-item-btn {
     width: 100%;
     padding: 12px 0;
     margin: 5px 0;
@@ -105,7 +106,7 @@
     transition: 0.2s;
   }
 
-  .category-btn:hover {
+  .category-btn:hover, .shop-btn:hover, .address-btn:hover, .add-item-btn:hover {
     background: #4b0082;
   }
 
@@ -114,35 +115,12 @@
     margin-top: 10px;
   }
 
-  .store-section {
-    border: 1px solid #555;
-    border-radius: 10px;
-    padding: 10px;
-    margin-top: 10px;
-  }
-
-  .store-title {
-    font-weight: bold;
-    margin-bottom: 5px;
-  }
-
-  .address-section, .product-section {
-    margin-left: 10px;
-    margin-bottom: 10px;
-  }
-
-  .product-preview img {
-    width: 80px;
-    height: 80px;
-    object-fit: cover;
-    margin-right: 5px;
-    margin-top: 5px;
-    border-radius: 5px;
-  }
-
-  .product-preview {
-    display: flex;
-    flex-wrap: wrap;
+  input[type="text"], input[type="number"], input[type="file"] {
+    width: 100%;
+    padding: 8px;
+    margin: 5px 0;
+    border-radius: 8px;
+    border: none;
   }
 </style>
 </head>
@@ -159,23 +137,33 @@
   <div id="energy-text">0 / 5</div>
 </div>
 
-<!-- Модальное окно категорий -->
-<div class="modal" id="categoryModal">
-  <div class="modal-content">
+<!-- Модальные окна -->
+<div class="modal" id="shopModal">
+  <div class="modal-content" id="shopContent">
     <h2>Магазины</h2>
-    <div id="storeList"></div>
-    <input type="text" id="storeNameInput" placeholder="Название магазина" style="width: 100%; margin-top:5px; padding:5px; border-radius:5px;">
-    <button class="category-btn" id="addStoreBtn">Добавить магазин</button>
-    <button class="category-btn close-btn" id="closeModal">Закрыть</button>
+    <div id="shopList"></div>
+    <button class="shop-btn" id="addShopBtn">Добавить магазин</button>
+    <button class="close-btn" id="closeShopModal">Закрыть</button>
   </div>
 </div>
 
-<!-- Модальное окно поиска -->
-<div class="modal" id="searchModal">
-  <div class="modal-content">
-    <h2>Поиск магазинов и товаров</h2>
-    <div id="searchList"></div>
-    <button class="category-btn close-btn" id="closeSearch">Закрыть</button>
+<div class="modal" id="addressModal">
+  <div class="modal-content" id="addressContent">
+    <h2>Адреса магазина</h2>
+    <div id="addressList"></div>
+    <button class="address-btn" id="addAddressBtn">Добавить адрес</button>
+    <button class="close-btn" id="closeAddressModal">Закрыть</button>
+  </div>
+</div>
+
+<div class="modal" id="itemModal">
+  <div class="modal-content" id="itemContent">
+    <h2>Добавить товар</h2>
+    <input type="text" id="itemName" placeholder="Название товара">
+    <input type="number" id="priceBefore" placeholder="Цена до">
+    <input type="number" id="priceAfter" placeholder="Цена после">
+    <button class="add-item-btn" id="saveItemBtn">Сохранить товар</button>
+    <button class="close-btn" id="closeItemModal">Закрыть</button>
   </div>
 </div>
 
@@ -183,7 +171,6 @@
   // ===== Энергия =====
   const maxEnergy = 5;
   let energy = Number(localStorage.getItem('energy')) || 0;
-  energy = Math.min(energy, maxEnergy);
   const energyBar = document.getElementById('energyBar');
   const energyText = document.getElementById('energy-text');
 
@@ -192,147 +179,122 @@
     energyBar.style.width = percent + '%';
     energyText.innerText = `${energy} / ${maxEnergy}`;
   }
-
   updateEnergyBar();
 
-  // ===== Магазины =====
-  const storeModal = document.getElementById('categoryModal');
-  const storeList = document.getElementById('storeList');
-  const closeModal = document.getElementById('closeModal');
-  const addStoreBtn = document.getElementById('addStoreBtn');
-  const storeNameInput = document.getElementById('storeNameInput');
-
-  let stores = JSON.parse(localStorage.getItem('stores')) || [];
-
-  function renderStores() {
-    storeList.innerHTML = '';
-    stores.sort((a,b)=>a.name.localeCompare(b.name));
-    stores.forEach((store, idx)=>{
-      const div = document.createElement('div');
-      div.className = 'store-section';
-      div.innerHTML = `<div class="store-title">${store.name}</div>
-        <div class="address-section" id="address-${idx}"></div>
-        <button class="category-btn" id="addAddress-${idx}">Добавить адрес</button>
-        <div class="product-section" id="products-${idx}"></div>
-      `;
-      storeList.appendChild(div);
-
-      // Добавление адреса
-      document.getElementById(`addAddress-${idx}`).onclick = () => {
-        if(navigator.geolocation){
-          navigator.geolocation.getCurrentPosition(pos=>{
-            const addr = `Lat: ${pos.coords.latitude.toFixed(5)}, Lng: ${pos.coords.longitude.toFixed(5)}`;
-            if(!store.addresses) store.addresses=[];
-            store.addresses.push({geo: addr, products: []});
-            localStorage.setItem('stores', JSON.stringify(stores));
-            renderStores();
-          });
-        } else {
-          alert('Геолокация не поддерживается');
-        }
-      };
-
-      // Отображение адресов
-      const addrDiv = document.getElementById(`address-${idx}`);
-      if(store.addresses){
-        store.addresses.forEach((a, aidx)=>{
-          const aDiv = document.createElement('div');
-          aDiv.innerHTML = `<b>Адрес ${aidx+1}:</b> ${a.geo} <button class="category-btn" id="addProd-${idx}-${aidx}">Добавить товар</button>
-          <div class="product-preview" id="preview-${idx}-${aidx}"></div>`;
-          addrDiv.appendChild(aDiv);
-
-          document.getElementById(`addProd-${idx}-${aidx}`).onclick = () => {
-            const name = prompt("Название товара:");
-            const priceBefore = prompt("Цена ДО:");
-            const priceAfter = prompt("Цена ПОСЛЕ:");
-            const file = prompt("Ссылка на фото товара (URL)"); // упрощение для демонстрации
-            if(!a.products) a.products=[];
-            a.products.push({name, priceBefore, priceAfter, photo:file});
-            localStorage.setItem('stores', JSON.stringify(stores));
-            renderStores();
-          };
-
-          const previewDiv = document.getElementById(`preview-${idx}-${aidx}`);
-          if(a.products){
-            a.products.forEach(p=>{
-              const img = document.createElement('img');
-              img.src = p.photo;
-              img.title = `${p.name}\nДо: ${p.priceBefore}\nПосле: ${p.priceAfter}`;
-              previewDiv.appendChild(img);
-            });
-          }
-        });
-      }
-    });
-  }
-
-  addStoreBtn.onclick = ()=>{
-    const name = storeNameInput.value.trim();
-    if(name!==''){
-      stores.push({name});
-      localStorage.setItem('stores', JSON.stringify(stores));
-      storeNameInput.value='';
-      renderStores();
-    }
-  }
-
-  closeModal.onclick = ()=>{
-    storeModal.style.display='none';
-  }
-
-  function openStoreModal(){
-    renderStores();
-    storeModal.style.display='flex';
-  }
-
-  // ===== Поиск =====
-  const searchModal = document.getElementById('searchModal');
-  const searchList = document.getElementById('searchList');
-  const closeSearch = document.getElementById('closeSearch');
-
-  function openSearchModal(){
-    searchList.innerHTML='';
-    stores.sort((a,b)=>a.name.localeCompare(b.name));
-    stores.forEach(store=>{
-      const div = document.createElement('div');
-      div.className='store-section';
-      div.innerHTML = `<div class="store-title">${store.name}</div>`;
-      if(store.addresses){
-        store.addresses.forEach((a, aidx)=>{
-          const aDiv = document.createElement('div');
-          aDiv.className='address-section';
-          aDiv.innerHTML=`<b>Адрес:</b> ${a.geo}`;
-          if(a.products){
-            const prodDiv = document.createElement('div');
-            prodDiv.className='product-preview';
-            a.products.forEach(p=>{
-              const img = document.createElement('img');
-              img.src=p.photo;
-              img.title=`${p.name}\nДо: ${p.priceBefore}\nПосле: ${p.priceAfter}`;
-              prodDiv.appendChild(img);
-            });
-            aDiv.appendChild(prodDiv);
-          }
-          div.appendChild(aDiv);
-        });
-      }
-      searchList.appendChild(div);
-    });
-    searchModal.style.display='flex';
-  }
-
-  closeSearch.onclick = ()=>searchModal.style.display='none';
-
-  // ===== Кнопки =====
-  document.getElementById('addDiscountBtn').onclick=openStoreModal;
-  document.getElementById('findDiscountBtn').onclick=openSearchModal;
-  document.getElementById('earnEnergyBtn').onclick=()=>{
-    if(energy<maxEnergy) energy++;
+  document.getElementById('earnEnergyBtn').onclick = () => {
+    if (energy < maxEnergy) energy++;
     localStorage.setItem('energy', energy);
     updateEnergyBar();
     alert('✅ Вы получили 1 энергию!');
   };
-</script>
 
+  // ===== Данные магазинов =====
+  let shops = []; // { name, addresses: [{name, items: [{name, priceBefore, priceAfter}]}] }
+  let currentShopIndex = null;
+  let currentAddressIndex = null;
+
+  const shopModal = document.getElementById('shopModal');
+  const shopList = document.getElementById('shopList');
+  const addShopBtn = document.getElementById('addShopBtn');
+  const closeShopModal = document.getElementById('closeShopModal');
+
+  const addressModal = document.getElementById('addressModal');
+  const addressList = document.getElementById('addressList');
+  const addAddressBtn = document.getElementById('addAddressBtn');
+  const closeAddressModal = document.getElementById('closeAddressModal');
+
+  const itemModal = document.getElementById('itemModal');
+  const itemName = document.getElementById('itemName');
+  const priceBefore = document.getElementById('priceBefore');
+  const priceAfter = document.getElementById('priceAfter');
+  const saveItemBtn = document.getElementById('saveItemBtn');
+  const closeItemModal = document.getElementById('closeItemModal');
+
+  // ===== Функции модалок =====
+  function openShopModal() {
+    shopList.innerHTML = '';
+    shops.sort((a,b)=>a.name.localeCompare(b.name)).forEach((shop,i)=>{
+      const btn = document.createElement('button');
+      btn.className='shop-btn';
+      btn.innerText = shop.name;
+      btn.onclick = ()=>{ currentShopIndex=i; openAddressModal(); };
+      shopList.appendChild(btn);
+    });
+    shopModal.style.display='flex';
+  }
+
+  function openAddressModal() {
+    const addresses = shops[currentShopIndex].addresses || [];
+    addressList.innerHTML='';
+    addresses.forEach((addr,i)=>{
+      const btn = document.createElement('button');
+      btn.className='address-btn';
+      btn.innerText = addr.name;
+      btn.onclick = ()=>{ currentAddressIndex=i; openItemModal(); };
+      addressList.appendChild(btn);
+    });
+    addressModal.style.display='flex';
+  }
+
+  function openItemModal() {
+    itemName.value=''; priceBefore.value=''; priceAfter.value='';
+    itemModal.style.display='flex';
+  }
+
+  // ===== Кнопки модалок =====
+  closeShopModal.onclick = ()=>{ shopModal.style.display='none'; };
+  closeAddressModal.onclick = ()=>{ addressModal.style.display='none'; };
+  closeItemModal.onclick = ()=>{ itemModal.style.display='none'; };
+
+  addShopBtn.onclick = ()=>{
+    const name = prompt('Введите название магазина:');
+    if(name){
+      shops.push({name, addresses: []});
+      openShopModal();
+    }
+  };
+
+  addAddressBtn.onclick = ()=>{
+    const addr = prompt('Введите адрес магазина:');
+    if(addr){
+      shops[currentShopIndex].addresses.push({name: addr, items: []});
+      openAddressModal();
+    }
+  };
+
+  saveItemBtn.onclick = ()=>{
+    const name = itemName.value.trim();
+    const before = parseFloat(priceBefore.value);
+    const after = parseFloat(priceAfter.value);
+    if(!name || isNaN(before) || isNaN(after)){
+      alert('Заполните все поля корректно!');
+      return;
+    }
+    const discount = ( (before-after)/before *100 );
+    if(discount<20){
+      alert('Скидка должна быть не меньше 20%');
+      return;
+    }
+    shops[currentShopIndex].addresses[currentAddressIndex].items.push({name, priceBefore:before, priceAfter:after});
+    alert(`Товар "${name}" добавлен!`);
+    itemModal.style.display='none';
+  };
+
+  // ===== Кнопки стартового экрана =====
+  document.getElementById('addDiscountBtn').onclick = ()=>{ openShopModal(); };
+  document.getElementById('findDiscountBtn').onclick = ()=>{
+    let list='Магазины и товары:\n';
+    shops.forEach(shop=>{
+      list+=`🏬 ${shop.name}\n`;
+      shop.addresses.forEach(addr=>{
+        list+=`  📍 ${addr.name}\n`;
+        addr.items.forEach(it=>{
+          list+=`    🛒 ${it.name}: ${it.priceBefore} → ${it.priceAfter}\n`;
+        });
+      });
+    });
+    alert(list || 'Список пуст');
+  };
+</script>
 </body>
 </html>
