@@ -11,8 +11,9 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    background: linear-gradient(135deg, #6a0dad, #4b0082);
+    background: linear-gradient(135deg, #5B2CFF, #3B82F6);
     font-family: Arial, sans-serif;
+    color: #fff;
   }
 
   .container {
@@ -44,77 +45,72 @@
   .energy-bar {
     width: 250px;
     height: 25px;
-    background: #555;
+    background: rgba(0,0,0,0.35);
     border-radius: 12px;
     overflow: hidden;
     margin-top: 15px;
+    box-shadow: inset 0 0 5px rgba(0,0,0,0.3);
   }
 
   .energy-fill {
     height: 100%;
-    background: linear-gradient(90deg, #ffcc00, #ffd700);
+    background: linear-gradient(90deg, #22D3EE, #A855F7);
     width: 0%;
     transition: width 0.3s;
+    box-shadow: 0 0 8px rgba(168,85,247,0.9);
   }
 
   #energy-text {
     margin-top: 5px;
-    color: white;
+    color: #F0E9FF;
     font-weight: bold;
     font-size: 18px;
     text-align: center;
+    text-shadow: 0 0 4px rgba(255,255,255,0.5);
   }
 
-  /* Модальное окно категорий */
-  .modal {
+  /* ===== Форма добавления ===== */
+  .add-screen {
     display: none;
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: rgba(0,0,0,0.6);
-    justify-content: center;
+    flex-direction: column;
     align-items: center;
-    z-index: 100;
-  }
-
-  .modal-content {
-    background: #1c1c1c;
-    border-radius: 15px;
+    gap: 12px;
+    background: rgba(0,0,0,0.4);
     padding: 20px;
-    width: 90%;
-    max-width: 400px;
-    color: white;
-    max-height: 80%;
-    overflow-y: auto;
+    border-radius: 20px;
   }
 
-  .modal-content h2 {
-    text-align: center;
-    margin-bottom: 15px;
-  }
-
-  .category-btn {
-    width: 100%;
-    padding: 12px 0;
-    margin: 5px 0;
-    border-radius: 12px;
+  .add-screen input, .add-screen select {
+    width: 200px;
+    padding: 8px;
+    border-radius: 10px;
     border: none;
-    background: #333;
-    color: white;
-    font-weight: bold;
-    cursor: pointer;
-    transition: 0.2s;
+    font-size: 16px;
   }
 
-  .category-btn:hover {
-    background: #4b0082;
+  .add-screen img {
+    max-width: 150px;
+    max-height: 150px;
+    margin-top: 5px;
+    border-radius: 10px;
   }
 
-  .close-btn {
-    background: #ff4444;
-    margin-top: 10px;
+  .shop-block {
+    background: rgba(255,255,255,0.1);
+    margin: 10px;
+    padding: 10px;
+    border-radius: 12px;
+    width: 90%;
   }
 
+  .shop-block h3 {
+    margin: 0 0 5px 0;
+  }
+
+  .discount-item {
+    margin-left: 10px;
+    font-size: 14px;
+  }
 </style>
 </head>
 <body>
@@ -128,15 +124,29 @@
     <div class="energy-fill" id="energyBar"></div>
   </div>
   <div id="energy-text">0 / 5</div>
-</div>
 
-<!-- Модальное окно категорий -->
-<div class="modal" id="categoryModal">
-  <div class="modal-content">
-    <h2>Выберите категорию</h2>
-    <div id="categoryList"></div>
-    <button class="category-btn close-btn" id="closeModal">Закрыть</button>
+  <!-- ===== Экран добавления ===== -->
+  <div class="add-screen" id="addScreen">
+    <input type="text" id="productName" placeholder="Название продукта">
+    <input type="number" id="priceBefore" placeholder="Цена до">
+    <input type="number" id="priceAfter" placeholder="Цена после">
+    <input type="text" id="store" placeholder="Магазин">
+    <input type="text" id="address" placeholder="Адрес">
+    <select id="category">
+      <option>Авто</option>
+      <option>Еда</option>
+      <option>Путешествия</option>
+      <option>Одежда</option>
+      <option>Другое</option>
+    </select>
+    <input type="file" id="photo">
+    <img id="preview" style="display:none;">
+    <button id="submitBtn">Сохранить</button>
+    <button id="backHomeBtn">Назад</button>
   </div>
+
+  <!-- ===== Список магазинов и скидок ===== -->
+  <div id="shopsList" style="width:90%; margin-top:20px;"></div>
 </div>
 
 <script>
@@ -156,51 +166,111 @@
   updateEnergyBar();
 
   // ===== Кнопки =====
-  const categoryModal = document.getElementById('categoryModal');
-  const categoryList = document.getElementById('categoryList');
-  const closeModal = document.getElementById('closeModal');
+  const addDiscountBtn = document.getElementById('addDiscountBtn');
+  const findDiscountBtn = document.getElementById('findDiscountBtn');
+  const earnEnergyBtn = document.getElementById('earnEnergyBtn');
 
-  const categories = [
-    "Автосервисы","Автозапчасти","Шиномонтаж","Аренда авто","Парковки",
-    "Кафе / Кофейни","Рестораны","Фастфуд","Магазины продуктов","Пекарни / Кондитерские","Фермерские продукты",
-    "Билеты","Туристические агенства","Экскурсии","Активный отдых / спорт","Музеи / выставки","Парки развлечений",
-    "Магазины одежды","Обувь","Аксессуары","Салоны красоты / парикмахерские",
-    "Фитнес-клубы / спортзалы","Медицинские центры","Аптеки","Спа / массаж","Йога / пилатес",
-    "Магазины техники","Ремонт техники","Компьютерные услуги","Фото / видео техника",
-    "Строительные материалы","Ремонт квартир / домов","Сад / растения","Мебель",
-    "Школы / репетиторы","Курсы языков","Курсы навыков / хобби","Онлайн-обучение",
-    "Книги / канцелярия","Подарки / сувениры","Услуги доставки","Фото / печать","Финансовые услуги","Животные / зоомагазины"
-  ];
+  const addScreen = document.getElementById('addScreen');
+  const backHomeBtn = document.getElementById('backHomeBtn');
 
-  function openCategoryModal() {
-    categoryList.innerHTML = '';
-    categories.forEach(cat => {
-      const btn = document.createElement('button');
-      btn.innerText = cat;
-      btn.className = 'category-btn';
-      btn.onclick = () => alert(`Вы выбрали категорию: ${cat}`);
-      categoryList.appendChild(btn);
-    });
-    categoryModal.style.display = 'flex';
-  }
-
-  closeModal.onclick = () => {
-    categoryModal.style.display = 'none';
+  addDiscountBtn.onclick = () => {
+    addScreen.style.display = 'flex';
   };
 
-  document.getElementById('addDiscountBtn').onclick = () => {
-    openCategoryModal();
+  backHomeBtn.onclick = () => {
+    addScreen.style.display = 'none';
   };
 
-  document.getElementById('findDiscountBtn').onclick = () => {
-    openCategoryModal();
+  findDiscountBtn.onclick = () => {
+    alert('Экран "Найти" пока не реализован');
   };
 
-  document.getElementById('earnEnergyBtn').onclick = () => {
+  earnEnergyBtn.onclick = () => {
     if (energy < maxEnergy) energy++;
     localStorage.setItem('energy', energy);
     updateEnergyBar();
     alert('✅ Вы получили 1 энергию!');
+  };
+
+  // ===== Фото =====
+  const photoInput = document.getElementById('photo');
+  const preview = document.getElementById('preview');
+  let photoData = null;
+
+  photoInput.addEventListener('change', () => {
+    const file = photoInput.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      photoData = e.target.result;
+      preview.src = photoData;
+      preview.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // ===== Добавление скидки =====
+  const submitBtn = document.getElementById('submitBtn');
+  const shopsList = document.getElementById('shopsList');
+  let shopsData = JSON.parse(localStorage.getItem('shopsData')) || {};
+
+  function renderShops() {
+    shopsList.innerHTML = '';
+    for (let shopKey in shopsData) {
+      const shop = shopsData[shopKey];
+      const div = document.createElement('div');
+      div.className = 'shop-block';
+      div.innerHTML = `<h3>${shop.store} — ${shop.address}</h3>`;
+      shop.discounts.forEach(d => {
+        const item = document.createElement('div');
+        item.className = 'discount-item';
+        item.innerHTML = `${d.name}: ${d.priceBefore} → ${d.priceAfter} (${d.category})<br><img src="${d.photo}" width="80">`;
+        div.appendChild(item);
+      });
+      shopsList.appendChild(div);
+    }
+  }
+
+  renderShops();
+
+  submitBtn.onclick = () => {
+    const name = document.getElementById('productName').value.trim();
+    const priceBefore = parseFloat(document.getElementById('priceBefore').value);
+    const priceAfter = parseFloat(document.getElementById('priceAfter').value);
+    const store = document.getElementById('store').value.trim();
+    const address = document.getElementById('address').value.trim();
+    const category = document.getElementById('category').value;
+
+    if(!name || !store || !address || isNaN(priceBefore) || isNaN(priceAfter) || !photoData) {
+      alert('Заполните все поля корректно!');
+      return;
+    }
+
+    const discountObj = {name, priceBefore, priceAfter, category, photo: photoData};
+
+    const shopKey = `${store}|${address}`;
+    if(shopsData[shopKey]) {
+      shopsData[shopKey].discounts.push(discountObj);
+    } else {
+      shopsData[shopKey] = {store, address, discounts:[discountObj]};
+    }
+
+    localStorage.setItem('shopsData', JSON.stringify(shopsData));
+    renderShops();
+
+    // Очистка формы
+    document.getElementById('productName').value = '';
+    document.getElementById('priceBefore').value = '';
+    document.getElementById('priceAfter').value = '';
+    document.getElementById('store').value = '';
+    document.getElementById('address').value = '';
+    document.getElementById('category').selectedIndex = 0;
+    photoInput.value = '';
+    preview.style.display = 'none';
+    photoData = null;
+
+    addScreen.style.display = 'none';
+    alert('✅ Скидка добавлена!');
   };
 </script>
 
