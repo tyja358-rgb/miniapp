@@ -65,7 +65,7 @@
     text-align: center;
   }
 
-  /* Модальное окно магазинов */
+  /* Модальные окна */
   .modal {
     display: none;
     position: fixed;
@@ -144,14 +144,23 @@
   <div id="energy-text">0 / 5</div>
 </div>
 
-<!-- Модальное окно магазинов -->
-<div class="modal" id="storeModal">
+<!-- Модальное окно Добавить -->
+<div class="modal" id="addModal">
   <div class="modal-content">
-    <h2>Магазины</h2>
+    <h2>Добавить</h2>
     <input type="text" id="newStoreName" placeholder="Название магазина">
     <button class="sub-btn" id="addStoreBtn">Добавить магазин</button>
     <div id="storeList"></div>
-    <button class="sub-btn close-btn" id="closeModal">Закрыть</button>
+    <button class="sub-btn close-btn" id="closeAddModal">Закрыть</button>
+  </div>
+</div>
+
+<!-- Модальное окно Найти -->
+<div class="modal" id="findModal">
+  <div class="modal-content">
+    <h2>Найти</h2>
+    <div id="findStoreList"></div>
+    <button class="sub-btn close-btn" id="closeFindModal">Закрыть</button>
   </div>
 </div>
 
@@ -171,22 +180,23 @@
   updateEnergyBar();
 
   // ===== Магазины =====
-  const storeModal = document.getElementById('storeModal');
-  const storeList = document.getElementById('storeList');
-  const closeModal = document.getElementById('closeModal');
-  const addStoreBtn = document.getElementById('addStoreBtn');
-  const newStoreName = document.getElementById('newStoreName');
-
   let stores = JSON.parse(localStorage.getItem('stores')) || [];
 
   function saveStores() {
     localStorage.setItem('stores', JSON.stringify(stores));
   }
 
-  function renderStores() {
+  // ===== Добавить =====
+  const addModal = document.getElementById('addModal');
+  const storeList = document.getElementById('storeList');
+  const closeAddModal = document.getElementById('closeAddModal');
+  const addStoreBtn = document.getElementById('addStoreBtn');
+  const newStoreName = document.getElementById('newStoreName');
+
+  function renderAddStores() {
     storeList.innerHTML = '';
     stores.sort((a,b)=> a.name.localeCompare(b.name));
-    stores.forEach((store, sIndex) => {
+    stores.forEach((store, sIndex)=>{
       const storeDiv = document.createElement('div');
       storeDiv.className = 'store-item';
       storeDiv.innerHTML = `<strong>${store.name}</strong>`;
@@ -195,23 +205,22 @@
       const addrInput = document.createElement('input');
       addrInput.placeholder = 'Добавить адрес';
       const addAddrBtn = document.createElement('button');
-      addAddrBtn.innerText = 'Добавить адрес';
       addAddrBtn.className = 'sub-btn';
-      addAddrBtn.onclick = () => {
+      addAddrBtn.innerText = 'Добавить адрес';
+      addAddrBtn.onclick = ()=>{
         const addr = addrInput.value.trim();
-        if(addr){
-          store.addresses = store.addresses || [];
-          store.addresses.push({text: addr, products:[]});
-          addrInput.value = '';
-          saveStores();
-          renderStores();
-        }
+        if(!addr) return;
+        store.addresses = store.addresses || [];
+        store.addresses.push({text: addr, products:[]});
+        addrInput.value = '';
+        saveStores();
+        renderAddStores();
       }
 
       storeDiv.appendChild(addrInput);
       storeDiv.appendChild(addAddrBtn);
 
-      // Список адресов
+      // Адреса
       if(store.addresses){
         store.addresses.forEach((addrObj)=>{
           const addrDiv = document.createElement('div');
@@ -241,11 +250,11 @@
                 priceBefore:Number(priceBefore.value),
                 priceAfter:Number(priceAfter.value)
               });
-              photoInput.value = '';
-              priceBefore.value = '';
-              priceAfter.value = '';
+              photoInput.value='';
+              priceBefore.value='';
+              priceAfter.value='';
               saveStores();
-              renderStores();
+              renderAddStores();
             }
             reader.readAsDataURL(file);
           }
@@ -263,32 +272,74 @@
     });
   }
 
-  addStoreBtn.onclick = () => {
+  addStoreBtn.onclick = ()=>{
     const name = newStoreName.value.trim();
     if(!name) return;
     stores.push({name, addresses:[]});
-    newStoreName.value = '';
+    newStoreName.value='';
     saveStores();
-    renderStores();
+    renderAddStores();
   }
 
-  closeModal.onclick = () => storeModal.style.display = 'none';
+  closeAddModal.onclick = ()=> addModal.style.display='none';
 
-  function openStoreModal() {
-    renderStores();
-    storeModal.style.display = 'flex';
+  function openAddModal(){
+    renderAddStores();
+    addModal.style.display='flex';
   }
 
-  document.getElementById('addDiscountBtn').onclick = openStoreModal;
-  document.getElementById('findDiscountBtn').onclick = openStoreModal;
+  // ===== Найти =====
+  const findModal = document.getElementById('findModal');
+  const findStoreList = document.getElementById('findStoreList');
+  const closeFindModal = document.getElementById('closeFindModal');
 
-  document.getElementById('earnEnergyBtn').onclick = () => {
-    if (energy < maxEnergy) energy++;
-    localStorage.setItem('energy', energy);
+  function renderFindStores(){
+    findStoreList.innerHTML='';
+    stores.sort((a,b)=> a.name.localeCompare(b.name));
+    stores.forEach(store=>{
+      const storeDiv = document.createElement('div');
+      storeDiv.className='store-item';
+      storeDiv.innerHTML=`<strong>${store.name}</strong>`;
+
+      if(store.addresses){
+        store.addresses.forEach(addrObj=>{
+          const addrDiv=document.createElement('div');
+          addrDiv.className='address-item';
+          addrDiv.innerHTML=addrObj.text;
+
+          if(addrObj.products){
+            addrObj.products.forEach(prod=>{
+              const prodDiv=document.createElement('div');
+              prodDiv.className='product-item';
+              prodDiv.innerHTML=`Цена до: ${prod.priceBefore} | Цена после: ${prod.priceAfter}`;
+              addrDiv.appendChild(prodDiv);
+            });
+          }
+
+          storeDiv.appendChild(addrDiv);
+        });
+      }
+
+      findStoreList.appendChild(storeDiv);
+    });
+  }
+
+  closeFindModal.onclick = ()=> findModal.style.display='none';
+  function openFindModal(){
+    renderFindStores();
+    findModal.style.display='flex';
+  }
+
+  // ===== Кнопки стартовой страницы =====
+  document.getElementById('addDiscountBtn').onclick=openAddModal;
+  document.getElementById('findDiscountBtn').onclick=openFindModal;
+  document.getElementById('earnEnergyBtn').onclick=()=>{
+    if(energy<maxEnergy) energy++;
+    localStorage.setItem('energy',energy);
     updateEnergyBar();
     alert('✅ Вы получили 1 энергию!');
-  };
-</script>
+  }
 
+</script>
 </body>
 </html>
