@@ -18,6 +18,157 @@
 
   .container {
     width: 100%;
+    max-width: 420px;
+    text-align: center;
+  }
+
+  /* ===== БОЛЬШИЕ КАРБОНОВЫЕ КНОПКИ ===== */
+  .carbon-btn {
+    width: 92%;
+    padding: 30px 0;
+    margin: 18px auto;
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    color: #f5f5f5;
+    border: none;
+    border-radius: 18px;
+    cursor: pointer;
+
+    background:
+      repeating-linear-gradient(
+        45deg,
+        #1a1a1a,
+        #1a1a1a 12px,
+        #242424 12px,
+        #242424 24px
+      );
+
+    box-shadow:
+      inset 0 2px 3px rgba(255,255,255,0.15),
+      inset 0 -4px 8px rgba(0,0,0,0.85),
+      0 14px 26px rgba(0,0,0,0.6);
+
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+
+  .carbon-btn:active {
+    transform: scale(0.95);
+    box-shadow:
+      inset 0 3px 6px rgba(0,0,0,0.95),
+      0 6px 12px rgba(0,0,0,0.7);
+  }
+
+  /* ===== ЭНЕРГИЯ ===== */
+  .energy-box {
+    margin: 34px auto 10px;
+    width: 92%;
+  }
+
+  .energy-bar-bg {
+    background: rgba(0,0,0,0.35);
+    height: 22px;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: inset 0 2px 6px rgba(0,0,0,0.7);
+  }
+
+  .energy-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #ff9800, #00ff88);
+    transition: width 0.3s;
+  }
+
+  .energy-text {
+    margin-top: 12px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #2b2b2b;
+    text-shadow: 0 1px 1px rgba(255,255,255,0.4);
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <button class="carbon-btn" id="addBtn">
+    ➕ ДОБАВИТЬ
+  </button>
+
+  <button class="carbon-btn" id="findBtn">
+    🔍 НАЙТИ
+  </button>
+
+  <button class="carbon-btn" id="energyBtn">
+    ⚡ ЭНЕРГИЯ
+  </button>
+
+  <div class="energy-box">
+    <div class="energy-bar-bg">
+      <div class="energy-bar" id="energyBar"></div>
+    </div>
+    <div class="energy-text">
+      Энергия: <span id="energyValue">0</span> / 5
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const maxEnergy = 5;
+  let energy = Number(localStorage.getItem('energy')) || 0;
+  energy = Math.min(energy, maxEnergy);
+
+  const energyBar = document.getElementById('energyBar');
+  const energyValue = document.getElementById('energyValue');
+
+  function updateEnergy() {
+    energyValue.textContent = energy;
+    energyBar.style.width = (energy / maxEnergy * 100) + '%';
+  }
+
+  updateEnergy();
+
+  document.getElementById('energyBtn').onclick = () => {
+    if (energy < maxEnergy) {
+      energy++;
+      localStorage.setItem('energy', energy);
+      updateEnergy();
+    }
+  };
+
+  document.getElementById('addBtn').onclick = () => {
+    alert('Экран добавления — следующий шаг');
+  };
+
+  document.getElementById('findBtn').onclick = () => {
+    alert('Экран поиска — следующий шаг');
+  };
+</script>
+
+</body>
+</html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MiniApp</title>
+
+<style>
+  body {
+    margin: 0;
+    height: 100vh;
+    font-family: Arial, sans-serif;
+    background: radial-gradient(circle at top, #ffd700, #b8860b);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .container {
+    width: 100%;
     max-width: 360px;
     text-align: center;
   }
