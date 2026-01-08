@@ -114,7 +114,6 @@
     background: #ff4444;
     margin-top: 10px;
   }
-
 </style>
 </head>
 <body>
@@ -155,11 +154,7 @@
 
   updateEnergyBar();
 
-  // ===== Кнопки =====
-  const categoryModal = document.getElementById('categoryModal');
-  const categoryList = document.getElementById('categoryList');
-  const closeModal = document.getElementById('closeModal');
-
+  // ===== Категории =====
   const categories = [
     "Автосервисы","Автозапчасти","Шиномонтаж","Аренда авто","Парковки",
     "Кафе / Кофейни","Рестораны","Фастфуд","Магазины продуктов","Пекарни / Кондитерские","Фермерские продукты",
@@ -171,6 +166,53 @@
     "Школы / репетиторы","Курсы языков","Курсы навыков / хобби","Онлайн-обучение",
     "Книги / канцелярия","Подарки / сувениры","Услуги доставки","Фото / печать","Финансовые услуги","Животные / зоомагазины"
   ];
+
+  // ===== LocalStorage для группировки скидок по адресу =====
+  let storesData = JSON.parse(localStorage.getItem('storesData') || '{}');
+
+  function addDiscount(name, address, photo, category) {
+    if (!name || !address || !photo || !category) {
+      alert('Все данные обязательны!');
+      return;
+    }
+
+    if (!storesData[address]) {
+      storesData[address] = [];
+    }
+
+    storesData[address].push({ name, photo, category, timestamp: Date.now() });
+    localStorage.setItem('storesData', JSON.stringify(storesData));
+    alert(`Скидка добавлена! Магазин: ${address}, категория: ${category}`);
+    console.log(storesData);
+  }
+
+  function onCategorySelected(category) {
+    const name = prompt('Введите название скидки:');
+    const address = prompt('Введите адрес магазина:');
+    const photo = prompt('Введите ссылку на фото (или base64):');
+
+    addDiscount(name, address, photo, category);
+  }
+
+  // ===== Модальное окно =====
+  const categoryModal = document.getElementById('categoryModal');
+  const categoryList = document.getElementById('categoryList');
+  const closeModal = document.getElementById('closeModal');
+
+  function openCategoryModalForAdding() {
+    categoryList.innerHTML = '';
+    categories.forEach(cat => {
+      const btn = document.createElement('button');
+      btn.innerText = cat;
+      btn.className = 'category-btn';
+      btn.onclick = () => {
+        categoryModal.style.display = 'none';
+        onCategorySelected(cat);
+      };
+      categoryList.appendChild(btn);
+    });
+    categoryModal.style.display = 'flex';
+  }
 
   function openCategoryModal() {
     categoryList.innerHTML = '';
@@ -188,14 +230,9 @@
     categoryModal.style.display = 'none';
   };
 
-  document.getElementById('addDiscountBtn').onclick = () => {
-    openCategoryModal();
-  };
-
-  document.getElementById('findDiscountBtn').onclick = () => {
-    openCategoryModal();
-  };
-
+  // ===== Кнопки =====
+  document.getElementById('addDiscountBtn').onclick = () => openCategoryModalForAdding();
+  document.getElementById('findDiscountBtn').onclick = () => openCategoryModal();
   document.getElementById('earnEnergyBtn').onclick = () => {
     if (energy < maxEnergy) energy++;
     localStorage.setItem('energy', energy);
