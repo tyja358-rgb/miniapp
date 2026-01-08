@@ -1,107 +1,138 @@
 <script>
-  // ===== Доп. данные для Магазинов =====
+document.addEventListener('DOMContentLoaded', () => {
   let stores = JSON.parse(localStorage.getItem('stores')) || [];
 
   function saveStores() {
     localStorage.setItem('stores', JSON.stringify(stores));
   }
 
-  // ===== Открытие категории Магазины =====
-  function openStoresCategory() {
-    let storeName = prompt("Выберите магазин или добавьте новый (оставьте пустым, чтобы выбрать существующий)");
-    
-    if (!storeName) {
-      if (stores.length === 0) {
-        alert("Нет магазинов. Добавьте новый через кнопку 'Добавить новый магазин'");
-        return;
-      }
-      // Выбор существующего магазина
-      let names = stores.map(s => s.name).join("\n");
-      storeName = prompt("Выберите магазин:\n" + names);
-      if (!storeName || !stores.find(s => s.name === storeName)) return;
-    }
+  // ===== Модальное окно магазинов =====
+  const storeModal = document.createElement('div');
+  storeModal.style.position = 'fixed';
+  storeModal.style.top = 0;
+  storeModal.style.left = 0;
+  storeModal.style.width = '100%';
+  storeModal.style.height = '100%';
+  storeModal.style.background = 'rgba(0,0,0,0.6)';
+  storeModal.style.display = 'none';
+  storeModal.style.justifyContent = 'center';
+  storeModal.style.alignItems = 'center';
+  storeModal.style.zIndex = 1000;
 
-    let store = stores.find(s => s.name === storeName);
-    if (!store) {
-      // Новый магазин
-      store = { name: storeName, addresses: [] };
-      stores.push(store);
-      saveStores();
-      alert(`Магазин "${storeName}" добавлен`);
-    }
+  const storeContent = document.createElement('div');
+  storeContent.style.background = '#1c1c1c';
+  storeContent.style.padding = '20px';
+  storeContent.style.borderRadius = '15px';
+  storeContent.style.maxWidth = '400px';
+  storeContent.style.width = '90%';
+  storeContent.style.color = 'white';
+  storeContent.style.maxHeight = '80%';
+  storeContent.style.overflowY = 'auto';
 
-    openStoreAddresses(store);
-  }
+  const storeTitle = document.createElement('h2');
+  storeTitle.innerText = 'Магазины';
+  storeTitle.style.textAlign = 'center';
+  storeContent.appendChild(storeTitle);
 
-  // ===== Адреса магазина =====
-  function openStoreAddresses(store) {
-    let address = prompt("Выберите адрес магазина или добавьте новый (оставьте пустым для выбора существующего)");
+  const storeList = document.createElement('div');
+  storeContent.appendChild(storeList);
 
-    if (!address) {
-      if (store.addresses.length === 0) {
-        alert("Нет адресов. Добавьте новый через кнопку 'Добавить новый адрес'");
-        return;
-      }
-      // Выбор существующего адреса
-      let addrList = store.addresses.map(a => a.address).join("\n");
-      address = prompt("Выберите адрес:\n" + addrList);
-      if (!address || !store.addresses.find(a => a.address === address)) return;
-    }
+  const addStoreBtn = document.createElement('button');
+  addStoreBtn.innerText = 'Добавить новый магазин';
+  addStoreBtn.style.width = '100%';
+  addStoreBtn.style.marginTop = '10px';
+  addStoreBtn.style.padding = '10px';
+  addStoreBtn.style.border = 'none';
+  addStoreBtn.style.borderRadius = '10px';
+  addStoreBtn.style.background = '#4b0082';
+  addStoreBtn.style.color = 'white';
+  addStoreBtn.style.cursor = 'pointer';
+  storeContent.appendChild(addStoreBtn);
 
-    let addrObj = store.addresses.find(a => a.address === address);
-    if (!addrObj) {
-      // Новый адрес
-      addrObj = { address: address, products: [] };
-      store.addresses.push(addrObj);
-      saveStores();
-      alert(`Адрес "${address}" добавлен`);
-    }
+  const closeBtn = document.createElement('button');
+  closeBtn.innerText = 'Закрыть';
+  closeBtn.style.width = '100%';
+  closeBtn.style.marginTop = '10px';
+  closeBtn.style.padding = '10px';
+  closeBtn.style.border = 'none';
+  closeBtn.style.borderRadius = '10px';
+  closeBtn.style.background = '#ff4444';
+  closeBtn.style.color = 'white';
+  closeBtn.style.cursor = 'pointer';
+  storeContent.appendChild(closeBtn);
 
-    addProduct(store, addrObj);
-  }
+  storeModal.appendChild(storeContent);
+  document.body.appendChild(storeModal);
 
-  // ===== Добавление товара =====
-  function addProduct(store, addrObj) {
-    // Реклама перед добавлением
-    showAd(() => {
-      const name = prompt("Название товара:");
-      const priceBefore = parseFloat(prompt("Цена до скидки:"));
-      const priceAfter = parseFloat(prompt("Цена после скидки:"));
-      const photo = prompt("Вставьте ссылку на фото или оставьте пустым для теста:");
-
-      if (!name || isNaN(priceBefore) || isNaN(priceAfter)) {
-        alert("Некорректные данные. Товар не добавлен.");
-        return;
-      }
-
-      if ((priceBefore - priceAfter) / priceBefore * 100 < 20) {
-        alert("Скидка должна быть не меньше 20%");
-        return;
-      }
-
-      addrObj.products.push({ name, priceBefore, priceAfter, photo });
-      saveStores();
-      alert(`Товар "${name}" добавлен в ${store.name}, ${addrObj.address}`);
+  function renderStores() {
+    storeList.innerHTML = '';
+    stores.forEach((s, idx) => {
+      const btn = document.createElement('button');
+      btn.innerText = s.name;
+      btn.style.width = '100%';
+      btn.style.marginTop = '5px';
+      btn.style.padding = '10px';
+      btn.style.border = 'none';
+      btn.style.borderRadius = '10px';
+      btn.style.background = '#333';
+      btn.style.color = 'white';
+      btn.style.cursor = 'pointer';
+      btn.onclick = () => openAddresses(idx);
+      storeList.appendChild(btn);
     });
   }
 
-  // ===== Реклама =====
-  function showAd(callback) {
-    let adTime = 5;
-    alert(`Реклама! Подождите ${adTime} секунд (симулируем)`);
-    setTimeout(callback, adTime * 1000);
+  function openAddresses(storeIdx) {
+    const store = stores[storeIdx];
+    let addr = prompt('Добавить новый адрес для ' + store.name + ' (оставьте пустым для отмены)');
+    if (addr) {
+      store.addresses = store.addresses || [];
+      store.addresses.push({ address: addr, products: [] });
+      saveStores();
+      alert('Адрес добавлен');
+      openProducts(store, addr);
+    }
   }
+
+  function openProducts(store, address) {
+    let name = prompt('Название товара:');
+    let priceBefore = parseFloat(prompt('Цена до скидки:'));
+    let priceAfter = parseFloat(prompt('Цена после скидки:'));
+    let photo = prompt('Ссылка на фото (опционально):');
+
+    if (!name || isNaN(priceBefore) || isNaN(priceAfter)) {
+      alert('Некорректные данные, товар не добавлен');
+      return;
+    }
+
+    if ((priceBefore - priceAfter) / priceBefore * 100 < 20) {
+      alert('Скидка должна быть ≥ 20%');
+      return;
+    }
+
+    // Реклама
+    alert('Реклама! (симулируется)');
+
+    let addrObj = store.addresses.find(a => a.address === address);
+    addrObj.products.push({ name, priceBefore, priceAfter, photo });
+    saveStores();
+    alert('Товар добавлен');
+  }
+
+  addStoreBtn.onclick = () => {
+    let name = prompt('Название нового магазина:');
+    if (!name) return;
+    stores.push({ name, addresses: [] });
+    saveStores();
+    renderStores();
+  };
+
+  closeBtn.onclick = () => storeModal.style.display = 'none';
 
   // ===== Подключение к стартовым кнопкам =====
   document.getElementById('addDiscountBtn').onclick = () => {
-    const category = prompt("Введите категорию: Для теста напишите 'Магазины'");
-    if (category && category.toLowerCase() === 'магазины') openStoresCategory();
-    else alert("Категория пока не реализована");
+    storeModal.style.display = 'flex';
+    renderStores();
   };
-
-  document.getElementById('findDiscountBtn').onclick = () => {
-    const category = prompt("Введите категорию: Для теста напишите 'Магазины'");
-    if (category && category.toLowerCase() === 'магазины') openStoresCategory();
-    else alert("Категория пока не реализована");
-  };
+});
 </script>
