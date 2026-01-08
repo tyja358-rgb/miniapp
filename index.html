@@ -1,138 +1,201 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MiniApp Start</title>
+<style>
+  body {
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #6a0dad, #4b0082);
+    font-family: Arial, sans-serif;
+  }
+
+  .container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 25px;
+  }
+
+  button {
+    width: 220px;
+    height: 70px;
+    border-radius: 35px;
+    border: none;
+    color: white;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+    box-shadow: 0 8px 15px rgba(0,0,0,0.3);
+    background: linear-gradient(145deg, #1c1c1c, #333);
+  }
+
+  button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 20px rgba(0,0,0,0.4);
+  }
+
+  .energy-bar {
+    width: 250px;
+    height: 25px;
+    background: #555;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-top: 15px;
+  }
+
+  .energy-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ffcc00, #ffd700);
+    width: 0%;
+    transition: width 0.3s;
+  }
+
+  #energy-text {
+    margin-top: 5px;
+    color: white;
+    font-weight: bold;
+    font-size: 18px;
+    text-align: center;
+  }
+
+  /* Модальное окно категорий */
+  .modal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.6);
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+  }
+
+  .modal-content {
+    background: #1c1c1c;
+    border-radius: 15px;
+    padding: 20px;
+    width: 90%;
+    max-width: 400px;
+    color: white;
+    max-height: 80%;
+    overflow-y: auto;
+  }
+
+  .modal-content h2 {
+    text-align: center;
+    margin-bottom: 15px;
+  }
+
+  .category-btn {
+    width: 100%;
+    padding: 12px 0;
+    margin: 5px 0;
+    border-radius: 12px;
+    border: none;
+    background: #333;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+
+  .category-btn:hover {
+    background: #4b0082;
+  }
+
+  .close-btn {
+    background: #ff4444;
+    margin-top: 10px;
+  }
+
+</style>
+</head>
+<body>
+
+<div class="container">
+  <button id="addDiscountBtn">Добавить</button>
+  <button id="findDiscountBtn">Найти</button>
+  <button id="earnEnergyBtn">Энергия</button>
+
+  <div class="energy-bar">
+    <div class="energy-fill" id="energyBar"></div>
+  </div>
+  <div id="energy-text">0 / 5</div>
+</div>
+
+<!-- Модальное окно категорий -->
+<div class="modal" id="categoryModal">
+  <div class="modal-content">
+    <h2>Выберите категорию</h2>
+    <div id="categoryList"></div>
+    <button class="category-btn close-btn" id="closeModal">Закрыть</button>
+  </div>
+</div>
+
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-  let stores = JSON.parse(localStorage.getItem('stores')) || [];
+  // ===== Энергия =====
+  const maxEnergy = 5;
+  let energy = Number(localStorage.getItem('energy')) || 0;
+  energy = Math.min(energy, maxEnergy);
+  const energyBar = document.getElementById('energyBar');
+  const energyText = document.getElementById('energy-text');
 
-  function saveStores() {
-    localStorage.setItem('stores', JSON.stringify(stores));
+  function updateEnergyBar() {
+    const percent = (energy / maxEnergy) * 100;
+    energyBar.style.width = percent + '%';
+    energyText.innerText = `${energy} / ${maxEnergy}`;
   }
 
-  // ===== Модальное окно магазинов =====
-  const storeModal = document.createElement('div');
-  storeModal.style.position = 'fixed';
-  storeModal.style.top = 0;
-  storeModal.style.left = 0;
-  storeModal.style.width = '100%';
-  storeModal.style.height = '100%';
-  storeModal.style.background = 'rgba(0,0,0,0.6)';
-  storeModal.style.display = 'none';
-  storeModal.style.justifyContent = 'center';
-  storeModal.style.alignItems = 'center';
-  storeModal.style.zIndex = 1000;
+  updateEnergyBar();
 
-  const storeContent = document.createElement('div');
-  storeContent.style.background = '#1c1c1c';
-  storeContent.style.padding = '20px';
-  storeContent.style.borderRadius = '15px';
-  storeContent.style.maxWidth = '400px';
-  storeContent.style.width = '90%';
-  storeContent.style.color = 'white';
-  storeContent.style.maxHeight = '80%';
-  storeContent.style.overflowY = 'auto';
+  // ===== Кнопки =====
+  const categoryModal = document.getElementById('categoryModal');
+  const categoryList = document.getElementById('categoryList');
+  const closeModal = document.getElementById('closeModal');
 
-  const storeTitle = document.createElement('h2');
-  storeTitle.innerText = 'Магазины';
-  storeTitle.style.textAlign = 'center';
-  storeContent.appendChild(storeTitle);
+  // Здесь только одна категория "Магазины"
+  const categories = [
+    "Магазины"
+  ];
 
-  const storeList = document.createElement('div');
-  storeContent.appendChild(storeList);
-
-  const addStoreBtn = document.createElement('button');
-  addStoreBtn.innerText = 'Добавить новый магазин';
-  addStoreBtn.style.width = '100%';
-  addStoreBtn.style.marginTop = '10px';
-  addStoreBtn.style.padding = '10px';
-  addStoreBtn.style.border = 'none';
-  addStoreBtn.style.borderRadius = '10px';
-  addStoreBtn.style.background = '#4b0082';
-  addStoreBtn.style.color = 'white';
-  addStoreBtn.style.cursor = 'pointer';
-  storeContent.appendChild(addStoreBtn);
-
-  const closeBtn = document.createElement('button');
-  closeBtn.innerText = 'Закрыть';
-  closeBtn.style.width = '100%';
-  closeBtn.style.marginTop = '10px';
-  closeBtn.style.padding = '10px';
-  closeBtn.style.border = 'none';
-  closeBtn.style.borderRadius = '10px';
-  closeBtn.style.background = '#ff4444';
-  closeBtn.style.color = 'white';
-  closeBtn.style.cursor = 'pointer';
-  storeContent.appendChild(closeBtn);
-
-  storeModal.appendChild(storeContent);
-  document.body.appendChild(storeModal);
-
-  function renderStores() {
-    storeList.innerHTML = '';
-    stores.forEach((s, idx) => {
+  function openCategoryModal() {
+    categoryList.innerHTML = '';
+    categories.forEach(cat => {
       const btn = document.createElement('button');
-      btn.innerText = s.name;
-      btn.style.width = '100%';
-      btn.style.marginTop = '5px';
-      btn.style.padding = '10px';
-      btn.style.border = 'none';
-      btn.style.borderRadius = '10px';
-      btn.style.background = '#333';
-      btn.style.color = 'white';
-      btn.style.cursor = 'pointer';
-      btn.onclick = () => openAddresses(idx);
-      storeList.appendChild(btn);
+      btn.innerText = cat;
+      btn.className = 'category-btn';
+      btn.onclick = () => alert(`Вы выбрали категорию: ${cat}`);
+      categoryList.appendChild(btn);
     });
+    categoryModal.style.display = 'flex';
   }
 
-  function openAddresses(storeIdx) {
-    const store = stores[storeIdx];
-    let addr = prompt('Добавить новый адрес для ' + store.name + ' (оставьте пустым для отмены)');
-    if (addr) {
-      store.addresses = store.addresses || [];
-      store.addresses.push({ address: addr, products: [] });
-      saveStores();
-      alert('Адрес добавлен');
-      openProducts(store, addr);
-    }
-  }
-
-  function openProducts(store, address) {
-    let name = prompt('Название товара:');
-    let priceBefore = parseFloat(prompt('Цена до скидки:'));
-    let priceAfter = parseFloat(prompt('Цена после скидки:'));
-    let photo = prompt('Ссылка на фото (опционально):');
-
-    if (!name || isNaN(priceBefore) || isNaN(priceAfter)) {
-      alert('Некорректные данные, товар не добавлен');
-      return;
-    }
-
-    if ((priceBefore - priceAfter) / priceBefore * 100 < 20) {
-      alert('Скидка должна быть ≥ 20%');
-      return;
-    }
-
-    // Реклама
-    alert('Реклама! (симулируется)');
-
-    let addrObj = store.addresses.find(a => a.address === address);
-    addrObj.products.push({ name, priceBefore, priceAfter, photo });
-    saveStores();
-    alert('Товар добавлен');
-  }
-
-  addStoreBtn.onclick = () => {
-    let name = prompt('Название нового магазина:');
-    if (!name) return;
-    stores.push({ name, addresses: [] });
-    saveStores();
-    renderStores();
+  closeModal.onclick = () => {
+    categoryModal.style.display = 'none';
   };
 
-  closeBtn.onclick = () => storeModal.style.display = 'none';
-
-  // ===== Подключение к стартовым кнопкам =====
   document.getElementById('addDiscountBtn').onclick = () => {
-    storeModal.style.display = 'flex';
-    renderStores();
+    openCategoryModal();
   };
-});
+
+  document.getElementById('findDiscountBtn').onclick = () => {
+    openCategoryModal();
+  };
+
+  document.getElementById('earnEnergyBtn').onclick = () => {
+    if (energy < maxEnergy) energy++;
+    localStorage.setItem('energy', energy);
+    updateEnergyBar();
+    alert('✅ Вы получили 1 энергию!');
+  };
 </script>
+
+</body>
+</html>
