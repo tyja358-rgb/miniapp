@@ -3,60 +3,113 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MiniApp - Тест UI</title>
+<title>MiniApp Start</title>
 <style>
-  body, html {margin:0;padding:0;height:100%;font-family:Arial,sans-serif;
-    display:flex;justify-content:center;align-items:center;background:linear-gradient(135deg,#4b0082,#8a2be2);color:#fff;}
-  .screen {position:absolute;width:100%;height:100%;top:0;left:0;display:flex;flex-direction:column;justify-content:center;align-items:center;transition:0.3s;opacity:0;pointer-events:none;}
-  .screen.active {opacity:1;pointer-events:all;}
-  button {background:#222;color:#fff;border:none;border-radius:50%;width:160px;height:160px;font-size:1.2rem;margin:20px;cursor:pointer;box-shadow:0 0 20px rgba(255,255,255,0.3);transition:transform 0.2s, box-shadow 0.2s;}
-  button:hover {transform:scale(1.1);box-shadow:0 0 40px rgba(255,255,255,0.6);}
-  .energy-bar-container {width:80%;height:20px;background:rgba(255,255,255,0.2);border-radius:10px;margin-top:30px;overflow:hidden;}
-  .energy-bar {height:100%;width:50%;background:linear-gradient(90deg,#ffea00,#ffd700);border-radius:10px;}
-  .energy-text {margin-top:5px;font-weight:bold;}
+  body {
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #6a0dad, #4b0082); /* фиолетовый градиент */
+    font-family: Arial, sans-serif;
+  }
+
+  .container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 25px;
+  }
+
+  button {
+    width: 220px;
+    height: 70px;
+    border-radius: 35px; /* круглые кнопки */
+    border: none;
+    color: white;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+    box-shadow: 0 8px 15px rgba(0,0,0,0.3);
+    background: linear-gradient(145deg, #1c1c1c, #333); /* карбон */
+  }
+
+  button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 20px rgba(0,0,0,0.4);
+  }
+
+  .energy-bar {
+    width: 250px;
+    height: 25px;
+    background: #555;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-top: 15px;
+  }
+
+  .energy-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ffcc00, #ffd700); /* золотой */
+    width: 0%;
+    transition: width 0.3s;
+  }
+
+  #energy-text {
+    margin-top: 5px;
+    color: white;
+    font-weight: bold;
+    font-size: 18px;
+    text-align: center;
+  }
 </style>
 </head>
 <body>
 
-<div id="homeScreen" class="screen active">
+<div class="container">
   <button id="addDiscountBtn">Добавить</button>
-  <button id="findDiscountBtn">Искать</button>
+  <button id="findDiscountBtn">Найти</button>
   <button id="earnEnergyBtn">Энергия</button>
-  <div class="energy-bar-container">
-    <div id="energyBar" class="energy-bar"></div>
+
+  <div class="energy-bar">
+    <div class="energy-fill" id="energyBar"></div>
   </div>
-  <div id="energySpan" class="energy-text">2</div>
-</div>
-
-<div id="addScreen" class="screen">
-  <h2>Экран Добавить</h2>
-  <button id="backHome1">Назад</button>
-</div>
-
-<div id="findScreen" class="screen">
-  <h2>Экран Найти</h2>
-  <button id="backHome2">Назад</button>
+  <div id="energy-text">0 / 5</div>
 </div>
 
 <script>
-const homeScreen = document.getElementById('homeScreen');
-const addScreen = document.getElementById('addScreen');
-const findScreen = document.getElementById('findScreen');
+  // ===== Энергия =====
+  const maxEnergy = 5;
+  let energy = Number(localStorage.getItem('energy')) || 0;
+  energy = Math.min(energy, maxEnergy);
+  const energyBar = document.getElementById('energyBar');
+  const energyText = document.getElementById('energy-text');
 
-document.getElementById('addDiscountBtn').onclick = ()=>{homeScreen.classList.remove('active'); addScreen.classList.add('active');};
-document.getElementById('findDiscountBtn').onclick = ()=>{homeScreen.classList.remove('active'); findScreen.classList.add('active');};
-document.getElementById('backHome1').onclick = ()=>{addScreen.classList.remove('active'); homeScreen.classList.add('active');};
-document.getElementById('backHome2').onclick = ()=>{findScreen.classList.remove('active'); homeScreen.classList.add('active');};
+  function updateEnergyBar() {
+    const percent = (energy / maxEnergy) * 100;
+    energyBar.style.width = percent + '%';
+    energyText.innerText = `${energy} / ${maxEnergy}`;
+  }
 
-document.getElementById('earnEnergyBtn').onclick = ()=>{
-  let bar = document.getElementById('energyBar');
-  let span = document.getElementById('energySpan');
-  let val = parseInt(span.innerText);
-  if(val<5) val++;
-  span.innerText = val;
-  bar.style.width = (val/5*100)+'%';
-  alert('Энергия увеличена на 1!');
-};
+  updateEnergyBar();
+
+  // ===== Кнопки =====
+  document.getElementById('addDiscountBtn').onclick = () => {
+    alert('Экран "Добавить" пока не реализован');
+  };
+
+  document.getElementById('findDiscountBtn').onclick = () => {
+    alert('Экран "Найти" пока не реализован');
+  };
+
+  document.getElementById('earnEnergyBtn').onclick = () => {
+    if (energy < maxEnergy) energy++;
+    localStorage.setItem('energy', energy);
+    updateEnergyBar();
+    alert('✅ Вы получили 1 энергию!');
+  };
 </script>
 
 </body>
